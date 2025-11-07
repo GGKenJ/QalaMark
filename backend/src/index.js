@@ -5,8 +5,19 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS настройки для фронтенда
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+const corsOptions = {
+  origin: FRONTEND_ORIGIN,
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false, // JWT передаём через Authorization, куки не используем
+  optionsSuccessStatus: 204
+};
+
 // Middleware
-app.use(cors()); // Разрешаем запросы с фронтенда
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Preflight для всех роутов
 app.use(express.json()); // Парсинг JSON тела запроса
 app.use(express.urlencoded({ extended: true })); // Парсинг URL-encoded данных
 
