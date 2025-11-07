@@ -1,0 +1,18 @@
+{
+  "name": "qalamark",
+  "version": "1.0.0",
+  "description": "QalaMark - платформа для отслеживания городских проблем",
+  "private": true,
+  "scripts": {
+    "start": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run start:backend\" \"npm run start:frontend:delayed\"",
+    "start:backend": "cd backend && nodemon src/index.js",
+    "start:frontend": "cd frontend && npm run dev",
+    "start:frontend:delayed": "node scripts/delay-start.js",
+    "dev": "npm run start",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
+

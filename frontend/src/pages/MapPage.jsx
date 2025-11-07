@@ -106,7 +106,6 @@ const MapPage = () => {
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const userMarkerRef = useRef(null);
-  const geolocationControlRef = useRef(null);
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const addressInputRef = useRef(null);
@@ -264,18 +263,6 @@ const MapPage = () => {
           yandexMapAutoSwitch: true,
           yandexMapDisablePoiInteractivity: true
         });
-
-        // Добавляем геолокацию контрол вручную с позиционированием в правом нижнем углу (выше кнопок режима)
-        const geolocationControl = new window.ymaps.control.GeolocationControl({
-          options: {
-            position: {
-              bottom: '100px',
-              right: '20px'
-            }
-          }
-        });
-        map.controls.add(geolocationControl);
-        geolocationControlRef.current = geolocationControl;
 
         // Устанавливаем тип карты (по умолчанию детальная)
         updateMapType(map, mapStyle);
@@ -588,6 +575,59 @@ const MapPage = () => {
     }
   };
 
+  // Функция для центрирования карты на местоположении пользователя
+  const handleGeolocationClick = () => {
+    if (!mapInstanceRef.current || !userLocation) return;
+
+    // Запрашиваем актуальное местоположение
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          
+          // Обновляем местоположение пользователя
+          setUserLocation({
+            lat,
+            lon,
+            name: 'Ваше местоположение'
+          });
+
+          // Центрируем карту на местоположении пользователя
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setCenter([lat, lon], 17, {
+              duration: 500
+            });
+            
+            // Обновляем маркер местоположения
+            addUserLocationMarker();
+          }
+        },
+        (error) => {
+          console.error('Ошибка получения геолокации:', error);
+          // Если не удалось получить новое местоположение, используем сохраненное
+          if (userLocation && mapInstanceRef.current) {
+            mapInstanceRef.current.setCenter([userLocation.lat, userLocation.lon], 17, {
+              duration: 500
+            });
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      // Если геолокация недоступна, просто центрируем на сохраненном местоположении
+      if (userLocation && mapInstanceRef.current) {
+        mapInstanceRef.current.setCenter([userLocation.lat, userLocation.lon], 17, {
+          duration: 500
+        });
+      }
+    }
+  };
+
   const openAddModal = () => {
     if (activeTab === 'map' && mapInstanceRef.current) {
       const center = mapInstanceRef.current.getCenter();
@@ -828,6 +868,19 @@ const MapPage = () => {
       {/* Кнопки переключения стиля карты и геолокация */}
       {activeTab === 'map' && (
         <div className={`map-controls-bottom-right ${!isAuthenticatedState ? 'disabled' : ''}`}>
+          {/* Кнопка геолокации */}
+          <button 
+            className="geolocation-button"
+            onClick={handleGeolocationClick}
+            title="Моё местоположение"
+            disabled={!isAuthenticatedState}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="12" cy="9" r="3" fill="currentColor"/>
+            </svg>
+          </button>
+          
           <div className="map-style-controls">
             <button 
               className={`style-button ${mapStyle === 'map' ? 'active' : ''}`}
@@ -835,8 +888,9 @@ const MapPage = () => {
               title="Детальная карта"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 11C13.1046 11 14 10.1046 14 9C14 7.89543 13.1046 7 12 7C10.8954 7 10 7.89543 10 9C10 10.1046 10.8954 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 7V17L9 20L15 17L21 20V10L15 7L9 10L3 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 10V20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M15 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
             <button 
@@ -845,9 +899,16 @@ const MapPage = () => {
               title="Гибрид"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 18V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4.93 4.93L7.76 7.76" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16.24 16.24L19.07 19.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4.93 19.07L7.76 16.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16.24 7.76L19.07 4.93" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
               </svg>
             </button>
           </div>

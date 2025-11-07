@@ -31,7 +31,8 @@
 
 .map-header.disabled,
 .filters-container.disabled,
-.map-style-controls.disabled {
+.map-style-controls.disabled,
+.map-controls-bottom-right.disabled .geolocation-button {
   pointer-events: none;
   opacity: 0.6;
 }
@@ -412,6 +413,55 @@
   right: 20px;
   z-index: 1000;
   pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* Кнопка геолокации */
+.geolocation-button {
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: #4CAF50;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+  position: relative;
+}
+
+.geolocation-button:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.5);
+}
+
+.geolocation-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+}
+
+.geolocation-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+.geolocation-button:disabled {
+  background: #9E9E9E;
+  cursor: not-allowed;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.geolocation-button:disabled:hover {
+  background: #9E9E9E;
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .map-style-controls {
