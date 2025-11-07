@@ -7,11 +7,72 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Список городов
 const CITIES = [
-  { id: 'kyzylorda', name: 'Кызылорда', lat: 45.0192, lon: 65.5083 },
-  { id: 'almaty', name: 'Алматы', lat: 43.2220, lon: 76.8512 },
-  { id: 'astana', name: 'Астана', lat: 51.1694, lon: 71.4491 },
-  { id: 'shymkent', name: 'Шымкент', lat: 42.3419, lon: 69.5901 },
-  { id: 'karaganda', name: 'Караганда', lat: 49.8014, lon: 73.1049 },
+  { 
+    id: 'kyzylorda', 
+    name: 'Кызылорда', 
+    lat: 45.0192, 
+    lon: 65.5083,
+    districts: [
+      { id: 'center', name: 'Центральный район' },
+      { id: 'north', name: 'Северный район' },
+      { id: 'south', name: 'Южный район' },
+      { id: 'east', name: 'Восточный район' },
+      { id: 'west', name: 'Западный район' }
+    ]
+  },
+  { 
+    id: 'almaty', 
+    name: 'Алматы', 
+    lat: 43.2220, 
+    lon: 76.8512,
+    districts: [
+      { id: 'center', name: 'Центральный район' },
+      { id: 'medeu', name: 'Медеуский район' },
+      { id: 'turksib', name: 'Турксибский район' }
+    ]
+  },
+  { 
+    id: 'astana', 
+    name: 'Астана', 
+    lat: 51.1694, 
+    lon: 71.4491,
+    districts: [
+      { id: 'center', name: 'Центральный район' },
+      { id: 'saryarka', name: 'Сарыаркинский район' }
+    ]
+  },
+  { 
+    id: 'shymkent', 
+    name: 'Шымкент', 
+    lat: 42.3419, 
+    lon: 69.5901,
+    districts: [
+      { id: 'center', name: 'Центральный район' },
+      { id: 'north', name: 'Северный район' }
+    ]
+  },
+  { 
+    id: 'karaganda', 
+    name: 'Караганда', 
+    lat: 49.8014, 
+    lon: 73.1049,
+    districts: [
+      { id: 'center', name: 'Центральный район' },
+      { id: 'kazbek', name: 'Казыбекбийский район' }
+    ]
+  },
+];
+
+// Расширенный список категорий
+const CATEGORIES = [
+  { id: 'road', name: 'Дорога', color: 'orange' },
+  { id: 'ecology', name: 'Экология', color: 'green' },
+  { id: 'lighting', name: 'Освещение', color: 'yellow' },
+  { id: 'water', name: 'Вода', color: 'blue' },
+  { id: 'garbage', name: 'Мусор', color: 'brown' },
+  { id: 'transport', name: 'Транспорт', color: 'red' },
+  { id: 'parks', name: 'Парки', color: 'darkGreen' },
+  { id: 'other', name: 'Другое', color: 'gray' }
 ];
 
 const MapPage = () => {
@@ -19,28 +80,36 @@ const MapPage = () => {
   const [isAuthenticatedState, setIsAuthenticatedState] = useState(false);
   const [activeTab, setActiveTab] = useState('map');
   const [feedbacks, setFeedbacks] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategories, setSelectedCategories] = useState(['all']); // Множественный выбор
   const [selectedCity, setSelectedCity] = useState('kyzylorda');
+  const [selectedDistrict, setSelectedDistrict] = useState('all');
   const [userLocation, setUserLocation] = useState(null);
+  const [currentUserCity, setCurrentUserCity] = useState(null);
   const [mapReady, setMapReady] = useState(false);
-  const [mapStyle, setMapStyle] = useState('hybrid'); // hybrid, map, satellite
+  const [mapStyle, setMapStyle] = useState('map'); // По умолчанию детальная карта
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [newFeedbackLocation, setNewFeedbackLocation] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [userVotes, setUserVotes] = useState({}); // { feedbackId: 'like' | 'dislike' | null }
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'other',
+    categories: [], // Множественный выбор категорий
+    comment: '',
     photo: null,
-    video: null
+    video: null,
+    address: ''
   });
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const userMarkerRef = useRef(null);
+  const geolocationControlRef = useRef(null);
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
+  const addressInputRef = useRef(null);
 
   // Проверка авторизации при загрузке
   useEffect(() => {
@@ -68,9 +137,26 @@ const MapPage = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Определяем текущий город пользователя
+            let userCity = null;
+            for (const city of CITIES) {
+              // Простая проверка: если координаты близки к городу
+              const distance = Math.sqrt(
+                Math.pow(lat - city.lat, 2) + Math.pow(lon - city.lon, 2)
+              );
+              if (distance < 0.5) { // Примерно 50 км
+                userCity = city.id;
+                break;
+              }
+            }
+            
+            setCurrentUserCity(userCity);
             setUserLocation({
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
+              lat,
+              lon,
               name: 'Ваше местоположение'
             });
           },
@@ -122,7 +208,6 @@ const MapPage = () => {
 
   // Загрузка Яндекс.Карт
   useEffect(() => {
-    // Проверяем, не загружен ли уже скрипт
     if (document.querySelector('script[src*="api-maps.yandex.ru"]')) {
       if (typeof window.ymaps !== 'undefined') {
         window.ymaps.ready(() => {
@@ -139,7 +224,6 @@ const MapPage = () => {
       return;
     }
 
-    // Загружаем Яндекс.Карты (без API ключа для базового использования)
     const script = document.createElement('script');
     script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU';
     script.onload = () => {
@@ -170,27 +254,37 @@ const MapPage = () => {
       try {
         const center = [userLocation.lat, userLocation.lon];
 
-        // Создаем карту Яндекс.Карт
+        // Создаем карту без typeSelector и fullscreenControl
         const map = new window.ymaps.Map(mapRef.current, {
           center: center,
           zoom: 15,
-          controls: ['zoomControl', 'geolocationControl', 'typeSelector', 'fullscreenControl']
+          controls: ['zoomControl'] // Только zoom
         }, {
           suppressMapOpenBlock: true,
           yandexMapAutoSwitch: true,
           yandexMapDisablePoiInteractivity: true
         });
 
-        // Устанавливаем тип карты
+        // Добавляем геолокацию контрол вручную с позиционированием в правом нижнем углу (выше кнопок режима)
+        const geolocationControl = new window.ymaps.control.GeolocationControl({
+          options: {
+            position: {
+              bottom: '100px',
+              right: '20px'
+            }
+          }
+        });
+        map.controls.add(geolocationControl);
+        geolocationControlRef.current = geolocationControl;
+
+        // Устанавливаем тип карты (по умолчанию детальная)
         updateMapType(map, mapStyle);
 
         mapInstanceRef.current = map;
         
-        // Добавляем маркер местоположения пользователя
         addUserLocationMarker();
         updateMarkers();
 
-        // Обработчик двойного клика для добавления метки
         map.events.add('dblclick', (e) => {
           const coords = e.get('coords');
           setNewFeedbackLocation({
@@ -200,9 +294,7 @@ const MapPage = () => {
           setShowAddModal(true);
         });
 
-        // Обработчик клика на карту
         map.events.add('click', (e) => {
-          // Закрываем балуны при клике на карту
           map.balloon.close();
         });
       } catch (error) {
@@ -220,7 +312,7 @@ const MapPage = () => {
     if (mapInstanceRef.current && mapReady && window.ymaps) {
       updateMarkers();
     }
-  }, [feedbacks, selectedCategory, mapReady]);
+  }, [feedbacks, selectedCategories, mapReady]);
 
   // Обновление типа карты
   const updateMapType = (map, style) => {
@@ -232,7 +324,7 @@ const MapPage = () => {
         map.setType('yandex#map', { checkZoomRange: true });
         break;
       default:
-        map.setType('yandex#hybrid', { checkZoomRange: true });
+        map.setType('yandex#map', { checkZoomRange: true });
     }
   };
 
@@ -242,11 +334,19 @@ const MapPage = () => {
     
     const city = CITIES.find(c => c.id === selectedCity);
     if (city) {
-      mapInstanceRef.current.setCenter([city.lat, city.lon], 15, {
-        duration: 500
-      });
+      // Если выбран текущий город пользователя - перемещаемся к его местоположению
+      if (currentUserCity === selectedCity && userLocation && userLocation.name === 'Ваше местоположение') {
+        mapInstanceRef.current.setCenter([userLocation.lat, userLocation.lon], 15, {
+          duration: 500
+        });
+      } else {
+        // Иначе перемещаемся к центру города
+        mapInstanceRef.current.setCenter([city.lat, city.lon], 15, {
+          duration: 500
+        });
+      }
     }
-  }, [selectedCity]);
+  }, [selectedCity, currentUserCity, userLocation]);
 
   const addUserLocationMarker = () => {
     if (!mapInstanceRef.current || !window.ymaps || !userLocation) return;
@@ -274,37 +374,28 @@ const MapPage = () => {
   const updateMarkers = () => {
     if (!mapInstanceRef.current || !window.ymaps) return;
 
-    // Удаляем старые маркеры
     markersRef.current.forEach(marker => {
       mapInstanceRef.current.geoObjects.remove(marker);
     });
     markersRef.current = [];
 
-    const filtered = selectedCategory === 'all' 
+    // Фильтруем по категориям
+    const filtered = selectedCategories.includes('all')
       ? feedbacks 
-      : feedbacks.filter(f => f.category === selectedCategory);
+      : feedbacks.filter(f => selectedCategories.includes(f.category));
 
     filtered.forEach(feedback => {
       try {
-        const markerColor = getMarkerColor(feedback.category);
+        const category = CATEGORIES.find(c => c.id === feedback.category) || CATEGORIES[CATEGORIES.length - 1];
         const marker = new window.ymaps.Placemark(
           [feedback.lat, feedback.lon],
           {
             balloonContentHeader: feedback.title || 'Без названия',
-            balloonContentBody: `
-              <div class="marker-popup">
-                <p class="category">${getCategoryName(feedback.category)}</p>
-                ${feedback.description ? `<p class="description">${feedback.description}</p>` : ''}
-                <div class="popup-footer">
-                  <span class="votes">👍 ${feedback.votes || 0}</span>
-                  <button class="vote-button" data-id="${feedback.id}">Подтвердить</button>
-                </div>
-              </div>
-            `,
+            balloonContentBody: `${getCategoryName(feedback.category)}${feedback.description ? ': ' + feedback.description : ''}`,
             hintContent: feedback.title || 'Без названия'
           },
           {
-            preset: `islands#${markerColor}CircleDotIcon`,
+            preset: `islands#${category.color}CircleDotIcon`,
             draggable: false
           }
         );
@@ -316,40 +407,25 @@ const MapPage = () => {
 
         mapInstanceRef.current.geoObjects.add(marker);
         markersRef.current.push(marker);
-
-        // Обработчик кнопки "Подтвердить" в балуне
-        marker.events.add('balloonopen', () => {
-          const button = document.querySelector(`.vote-button[data-id="${feedback.id}"]`);
-          if (button) {
-            button.addEventListener('click', () => handleVote(feedback.id));
-          }
-        });
       } catch (error) {
         console.error('Ошибка добавления маркера:', error);
       }
     });
   };
 
-  const getMarkerColor = (category) => {
-    switch (category) {
-      case 'road': return 'orange';
-      case 'ecology': return 'green';
-      case 'lighting': return 'yellow';
-      default: return 'gray';
-    }
-  };
-
   const getCategoryName = (category) => {
-    const names = {
-      road: 'Дорога',
-      ecology: 'Экология',
-      lighting: 'Освещение',
-      other: 'Другое'
-    };
-    return names[category] || 'Другое';
+    const cat = CATEGORIES.find(c => c.id === category);
+    return cat ? cat.name : 'Другое';
   };
 
-  const handleVote = async (id) => {
+  const handleLike = async (id) => {
+    const currentVote = userVotes[id];
+    // Если уже лайкнул, убираем лайк
+    if (currentVote === 'like') {
+      setUserVotes(prev => ({ ...prev, [id]: null }));
+      return;
+    }
+    
     try {
       const token = localStorage.getItem('qm_token');
       const response = await fetch(`${API_URL}/api/feedback/${id}/vote`, {
@@ -357,7 +433,8 @@ const MapPage = () => {
         headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
-        }
+        },
+        body: JSON.stringify({ type: 'like' })
       });
 
       if (response.ok) {
@@ -368,22 +445,65 @@ const MapPage = () => {
         if (selectedFeedback && selectedFeedback.id === id) {
           setSelectedFeedback(updated);
         }
+        // Устанавливаем лайк и убираем дизлайк если был
+        setUserVotes(prev => ({ ...prev, [id]: 'like' }));
       }
     } catch (error) {
-      console.error('Ошибка при голосовании:', error);
+      console.error('Ошибка при лайке:', error);
+    }
+  };
+
+  const handleDislike = async (id) => {
+    const currentVote = userVotes[id];
+    // Если уже дизлайкнул, убираем дизлайк
+    if (currentVote === 'dislike') {
+      setUserVotes(prev => ({ ...prev, [id]: null }));
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('qm_token');
+      const response = await fetch(`${API_URL}/api/feedback/${id}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify({ type: 'dislike' })
+      });
+
+      if (response.ok) {
+        const updated = await response.json();
+        setFeedbacks(prev => 
+          prev.map(f => f.id === id ? updated : f)
+        );
+        if (selectedFeedback && selectedFeedback.id === id) {
+          setSelectedFeedback(updated);
+        }
+        // Устанавливаем дизлайк и убираем лайк если был
+        setUserVotes(prev => ({ ...prev, [id]: 'dislike' }));
+      }
+    } catch (error) {
+      console.error('Ошибка при дизлайке:', error);
     }
   };
 
   const handleAddFeedback = async (e) => {
     e.preventDefault();
     
-    if (!newFeedbackLocation) return;
+    if (!newFeedbackLocation) {
+      alert('Выберите место на карте или введите адрес');
+      return;
+    }
 
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('category', formData.category);
+      formDataToSend.append('comment', formData.comment);
+      formDataToSend.append('address', formData.address);
+      // Отправляем первую категорию (можно расширить для множественного выбора)
+      formDataToSend.append('category', formData.categories[0] || 'other');
       formDataToSend.append('lat', newFeedbackLocation.lat);
       formDataToSend.append('lon', newFeedbackLocation.lon);
       
@@ -410,9 +530,11 @@ const MapPage = () => {
         setFormData({
           title: '',
           description: '',
-          category: 'other',
+          categories: [],
+          comment: '',
           photo: null,
-          video: null
+          video: null,
+          address: ''
         });
         setNewFeedbackLocation(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -435,12 +557,28 @@ const MapPage = () => {
     }
   };
 
+  const handleCategoryToggle = (categoryId) => {
+    setSelectedCategories(prev => {
+      if (categoryId === 'all') {
+        return ['all'];
+      }
+      const newCategories = prev.filter(c => c !== 'all');
+      if (newCategories.includes(categoryId)) {
+        const filtered = newCategories.filter(c => c !== categoryId);
+        return filtered.length === 0 ? ['all'] : filtered;
+      } else {
+        return [...newCategories, categoryId];
+      }
+    });
+  };
+
   const handleProfileClick = () => {
     console.log('Profile clicked');
   };
 
   const handleCityChange = (cityId) => {
     setSelectedCity(cityId);
+    setSelectedDistrict('all');
   };
 
   const handleMapStyleChange = (style) => {
@@ -461,9 +599,54 @@ const MapPage = () => {
     setShowAddModal(true);
   };
 
-  const filteredFeedbacks = selectedCategory === 'all' 
-    ? feedbacks 
-    : feedbacks.filter(f => f.category === selectedCategory);
+  const handleAddressSearch = () => {
+    if (!formData.address || !mapInstanceRef.current || !window.ymaps) return;
+    
+    // Используем геокодер Яндекс.Карт для поиска адреса
+    window.ymaps.geocode(formData.address).then((res) => {
+      const firstGeoObject = res.geoObjects.get(0);
+      if (firstGeoObject) {
+        const coords = firstGeoObject.geometry.getCoordinates();
+        setNewFeedbackLocation({
+          lat: coords[0],
+          lon: coords[1]
+        });
+        mapInstanceRef.current.setCenter(coords, 15);
+        
+        // Добавляем временную метку
+        if (mapInstanceRef.current) {
+          const tempMarker = new window.ymaps.Placemark(coords, {
+            hintContent: formData.address
+          }, {
+            preset: 'islands#redCircleDotIcon'
+          });
+          mapInstanceRef.current.geoObjects.add(tempMarker);
+          
+          // Удаляем метку через 5 секунд
+          setTimeout(() => {
+            mapInstanceRef.current.geoObjects.remove(tempMarker);
+          }, 5000);
+        }
+      } else {
+        alert('Адрес не найден');
+      }
+    });
+  };
+
+  // Фильтрация жалоб для списка
+  const filteredFeedbacks = feedbacks.filter(feedback => {
+    // Фильтр по категориям
+    const categoryMatch = selectedCategories.includes('all') || selectedCategories.includes(feedback.category);
+    
+    // Фильтр по поисковому запросу
+    const searchMatch = !searchQuery || 
+      feedback.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      feedback.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return categoryMatch && searchMatch;
+  });
+
+  const currentCity = CITIES.find(c => c.id === selectedCity) || CITIES[0];
 
   return (
     <div className={`map-page ${!isAuthenticatedState ? 'blurred' : ''}`}>
@@ -474,61 +657,88 @@ const MapPage = () => {
 
       {/* Верхняя панель */}
       <div className={`map-header ${!isAuthenticatedState ? 'disabled' : ''}`}>
-        <button className="profile-button" onClick={handleProfileClick}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        {activeTab === 'map' && (
+          <button className="profile-button" onClick={handleProfileClick}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
 
-        <div className="tabs-container">
-          <button
-            className={`tab-button ${activeTab === 'map' ? 'active' : ''}`}
-            onClick={() => setActiveTab('map')}
-          >
-            Карта
-          </button>
-          <button
-            className={`tab-button ${activeTab === 'list' ? 'active' : ''}`}
-            onClick={() => setActiveTab('list')}
-          >
-            Жалобы
-          </button>
+        <div className="header-content">
+          <div className="tabs-container">
+            <button
+              className={`tab-button ${activeTab === 'map' ? 'active' : ''}`}
+              onClick={() => setActiveTab('map')}
+            >
+              Карта
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'list' ? 'active' : ''}`}
+              onClick={() => setActiveTab('list')}
+            >
+              Жалобы
+            </button>
+          </div>
         </div>
+
+        {/* Селекторы города и района в правом верхнем углу */}
+        {activeTab === 'map' && (
+          <div className={`top-right-selectors ${!isAuthenticatedState ? 'disabled' : ''}`}>
+            <div className="city-selector">
+              <select 
+                className="city-select"
+                value={selectedCity}
+                onChange={(e) => handleCityChange(e.target.value)}
+              >
+                {CITIES.map(city => (
+                  <option key={city.id} value={city.id}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="district-selector">
+              <select 
+                className="district-select"
+                value={selectedDistrict}
+                onChange={(e) => setSelectedDistrict(e.target.value)}
+              >
+                <option value="all">Все районы</option>
+                {currentCity.districts.map(district => (
+                  <option key={district.id} value={district.id}>
+                    {district.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Категории в header */}
+        {activeTab === 'map' && (
+          <div className={`header-categories ${!isAuthenticatedState ? 'disabled' : ''}`}>
+            <div className="category-filter-wrapper">
+              <div className="category-filter-multi">
+                <div className="category-checkboxes-vertical">
+                  {CATEGORIES.map(cat => (
+                    <label key={cat.id} className="category-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(cat.id)}
+                        onChange={() => handleCategoryToggle(cat.id)}
+                      />
+                      <span>{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Фильтры */}
-      {activeTab === 'map' && (
-        <div className={`filters-container ${!isAuthenticatedState ? 'disabled' : ''}`}>
-          <div className="city-selector">
-            <select 
-              className="city-select"
-              value={selectedCity}
-              onChange={(e) => handleCityChange(e.target.value)}
-            >
-              {CITIES.map(city => (
-                <option key={city.id} value={city.id}>
-                  {city.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="category-filter-wrapper">
-            <select 
-              className="category-filter"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-            >
-              <option value="all">Все категории</option>
-              <option value="road">Дорога</option>
-              <option value="ecology">Экология</option>
-              <option value="lighting">Освещение</option>
-              <option value="other">Другое</option>
-            </select>
-          </div>
-        </div>
-      )}
 
       {/* Контент карты */}
       <div className="map-content">
@@ -546,7 +756,6 @@ const MapPage = () => {
         {activeTab === 'list' && (
           <div className="list-container">
             <div className="list-header">
-              <h2>Жалобы</h2>
               <button className="add-feedback-button" onClick={openAddModal}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -554,6 +763,34 @@ const MapPage = () => {
                 Добавить жалобу
               </button>
             </div>
+            
+            {/* Фильтр и поиск */}
+            <div className="list-filters">
+              <div className="search-box">
+                <input
+                  type="text"
+                  placeholder="Поиск жалоб..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+              <div className="list-category-filter">
+                <div className="list-category-checkboxes">
+                  {CATEGORIES.map(cat => (
+                    <label key={cat.id} className="list-category-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(cat.id)}
+                        onChange={() => handleCategoryToggle(cat.id)}
+                      />
+                      <span>{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="feedbacks-list">
               {filteredFeedbacks.length === 0 ? (
                 <p className="empty-list">Жалоб пока нет</p>
@@ -575,7 +812,7 @@ const MapPage = () => {
                       <p className="feedback-description">{feedback.description}</p>
                     )}
                     <div className="feedback-item-footer">
-                      <span className="feedback-votes">👍 {feedback.votes || 0}</span>
+                      <span className="feedback-votes">👍 {feedback.votes || 0} 👎 {feedback.dislikes || 0}</span>
                       <span className="feedback-date">
                         {feedback.created_at ? new Date(feedback.created_at).toLocaleDateString('ru-RU') : ''}
                       </span>
@@ -588,30 +825,32 @@ const MapPage = () => {
         )}
       </div>
 
-      {/* Кнопки переключения стиля карты */}
+      {/* Кнопки переключения стиля карты и геолокация */}
       {activeTab === 'map' && (
-        <div className={`map-style-controls ${!isAuthenticatedState ? 'disabled' : ''}`}>
-          <button 
-            className={`style-button ${mapStyle === 'map' ? 'active' : ''}`}
-            onClick={() => handleMapStyleChange('map')}
-            title="Схема"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M12 11C13.1046 11 14 10.1046 14 9C14 7.89543 13.1046 7 12 7C10.8954 7 10 7.89543 10 9C10 10.1046 10.8954 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button 
-            className={`style-button ${mapStyle === 'hybrid' ? 'active' : ''}`}
-            onClick={() => handleMapStyleChange('hybrid')}
-            title="Гибрид"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+        <div className={`map-controls-bottom-right ${!isAuthenticatedState ? 'disabled' : ''}`}>
+          <div className="map-style-controls">
+            <button 
+              className={`style-button ${mapStyle === 'map' ? 'active' : ''}`}
+              onClick={() => handleMapStyleChange('map')}
+              title="Детальная карта"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 11C13.1046 11 14 10.1046 14 9C14 7.89543 13.1046 7 12 7C10.8954 7 10 7.89543 10 9C10 10.1046 10.8954 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button 
+              className={`style-button ${mapStyle === 'hybrid' ? 'active' : ''}`}
+              onClick={() => handleMapStyleChange('hybrid')}
+              title="Гибрид"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 
@@ -622,9 +861,11 @@ const MapPage = () => {
           setFormData({
             title: '',
             description: '',
-            category: 'other',
+            categories: [],
+            comment: '',
             photo: null,
-            video: null
+            video: null,
+            address: ''
           });
           setNewFeedbackLocation(null);
           if (fileInputRef.current) fileInputRef.current.value = '';
@@ -638,9 +879,11 @@ const MapPage = () => {
                 setFormData({
                   title: '',
                   description: '',
-                  category: 'other',
+                  categories: [],
+                  comment: '',
                   photo: null,
-                  video: null
+                  video: null,
+                  address: ''
                 });
                 setNewFeedbackLocation(null);
                 if (fileInputRef.current) fileInputRef.current.value = '';
@@ -652,67 +895,105 @@ const MapPage = () => {
               </button>
             </div>
             <form onSubmit={handleAddFeedback} className="feedback-form">
-              <div className="form-group">
-                <label>Заголовок *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  required
-                  placeholder="Введите заголовок жалобы"
-                />
-              </div>
-              <div className="form-group">
-                <label>Описание</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Опишите проблему"
-                  rows="4"
-                />
-              </div>
-              <div className="form-group">
-                <label>Категория *</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  required
-                >
-                  <option value="road">Дорога</option>
-                  <option value="ecology">Экология</option>
-                  <option value="lighting">Освещение</option>
-                  <option value="other">Другое</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Фото</label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(e, 'photo')}
-                />
-                {formData.photo && (
-                  <div className="file-preview">
-                    <img src={URL.createObjectURL(formData.photo)} alt="Preview" />
-                    <span>{formData.photo.name}</span>
+              <div className="form-main-content">
+                <div className="form-left">
+                  <div className="form-group">
+                    <label>Адрес *</label>
+                    <div className="address-input-group">
+                      <input
+                        ref={addressInputRef}
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                        placeholder="Введите адрес или выберите на карте"
+                        required
+                      />
+                      <button 
+                        type="button" 
+                        className="address-search-button"
+                        onClick={handleAddressSearch}
+                      >
+                        Найти
+                      </button>
+                    </div>
+                    {newFeedbackLocation && (
+                      <p className="location-info">
+                        Координаты: {newFeedbackLocation.lat.toFixed(6)}, {newFeedbackLocation.lon.toFixed(6)}
+                      </p>
+                    )}
                   </div>
-                )}
-              </div>
-              <div className="form-group">
-                <label>Видео</label>
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => handleFileChange(e, 'video')}
-                />
-                {formData.video && (
-                  <div className="file-preview">
-                    <video src={URL.createObjectURL(formData.video)} controls />
-                    <span>{formData.video.name}</span>
+
+                  <div className="form-group">
+                    <label>Заголовок *</label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      required
+                      placeholder="Введите заголовок жалобы"
+                    />
                   </div>
-                )}
+                  <div className="form-group">
+                    <label>Описание</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Опишите проблему"
+                      rows="4"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Фото и Видео</label>
+                    <div className="file-inputs-group">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, 'photo')}
+                        className="file-input"
+                      />
+                      <input
+                        ref={videoInputRef}
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => handleFileChange(e, 'video')}
+                        className="file-input"
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Комментарий</label>
+                    <textarea
+                      value={formData.comment}
+                      onChange={(e) => setFormData(prev => ({ ...prev, comment: e.target.value }))}
+                      placeholder="Добавьте комментарий..."
+                      rows="3"
+                    />
+                  </div>
+                </div>
+                <div className="form-right">
+                  <div className="form-group">
+                    <label>Категории * (можно выбрать несколько)</label>
+                    <div className="category-checkboxes-form-vertical">
+                      {CATEGORIES.map(cat => (
+                        <label key={cat.id} className="category-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={formData.categories.includes(cat.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData(prev => ({ ...prev, categories: [...prev.categories, cat.id] }));
+                              } else {
+                                setFormData(prev => ({ ...prev, categories: prev.categories.filter(c => c !== cat.id) }));
+                              }
+                            }}
+                          />
+                          <span>{cat.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="form-actions">
                 <button type="button" className="cancel-button" onClick={() => {
@@ -720,9 +1001,11 @@ const MapPage = () => {
                   setFormData({
                     title: '',
                     description: '',
-                    category: 'other',
+                    categories: [],
+                    comment: '',
                     photo: null,
-                    video: null
+                    video: null,
+                    address: ''
                   });
                   setNewFeedbackLocation(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
@@ -773,14 +1056,27 @@ const MapPage = () => {
                 />
               )}
               <div className="feedback-view-footer">
-                <span className="feedback-view-votes">👍 {selectedFeedback.votes || 0}</span>
-                <button 
-                  className="vote-button"
-                  onClick={() => handleVote(selectedFeedback.id)}
-                >
-                  Подтвердить
-                </button>
+                <div className="vote-buttons">
+                  <button 
+                    className={`like-button ${userVotes[selectedFeedback.id] === 'like' ? 'active' : ''}`}
+                    onClick={() => handleLike(selectedFeedback.id)}
+                  >
+                    👍 {selectedFeedback.votes || 0}
+                  </button>
+                  <button 
+                    className={`dislike-button ${userVotes[selectedFeedback.id] === 'dislike' ? 'active' : ''}`}
+                    onClick={() => handleDislike(selectedFeedback.id)}
+                  >
+                    👎 {selectedFeedback.dislikes || 0}
+                  </button>
+                </div>
               </div>
+              {selectedFeedback.comment && (
+                <div className="feedback-comment">
+                  <strong>Комментарий:</strong>
+                  <p>{selectedFeedback.comment}</p>
+                </div>
+              )}
               {selectedFeedback.created_at && (
                 <p className="feedback-view-date">
                   Создано: {new Date(selectedFeedback.created_at).toLocaleString('ru-RU')}

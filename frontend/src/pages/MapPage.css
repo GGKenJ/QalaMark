@@ -43,12 +43,43 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 16px 20px;
   background: transparent;
   pointer-events: none;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Селекторы города и района в правом верхнем углу */
+.top-right-selectors {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 1001;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  pointer-events: auto;
+}
+
+/* Категории в header */
+.header-categories {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  z-index: 1001;
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Кнопка профиля */
@@ -153,6 +184,15 @@
   transition: all 0.2s ease;
 }
 
+/* Селекторы в правом верхнем углу без карточки */
+.top-right-selectors .city-select,
+.top-right-selectors .district-select {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
 .city-select {
   font-weight: 600;
   color: #2E7D32;
@@ -165,8 +205,19 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.top-right-selectors .city-select:hover,
+.top-right-selectors .district-select:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .city-select:focus,
 .category-filter:focus {
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+}
+
+.top-right-selectors .city-select:focus,
+.top-right-selectors .district-select:focus {
   box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
 }
 
@@ -354,12 +405,16 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Контролы стиля карты */
-.map-style-controls {
+/* Контролы стиля карты в правом нижнем углу */
+.map-controls-bottom-right {
   position: absolute;
   bottom: 20px;
   right: 20px;
   z-index: 1000;
+  pointer-events: auto;
+}
+
+.map-style-controls {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -420,7 +475,7 @@
 
 .list-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: 20px;
   background: white;
@@ -428,13 +483,6 @@
   position: sticky;
   top: 0;
   z-index: 10;
-}
-
-.list-header h2 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #212121;
 }
 
 .add-feedback-button {
@@ -683,6 +731,40 @@
   padding: 20px;
 }
 
+.form-main-content {
+  display: flex;
+  gap: 24px;
+}
+
+.form-left {
+  flex: 1;
+}
+
+.form-right {
+  width: 250px;
+  flex-shrink: 0;
+}
+
+.file-inputs-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-input {
+  padding: 8px;
+  border: 2px dashed #E0E0E0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.file-input:hover {
+  border-color: #2E7D32;
+  background: rgba(46, 125, 50, 0.05);
+}
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -762,7 +844,7 @@
 .form-actions {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
+  justify-content: center;
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid #E0E0E0;
@@ -778,6 +860,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  min-width: 120px;
 }
 
 .cancel-button {
@@ -859,4 +942,367 @@
   font-size: 12px;
   color: #616161;
   text-align: right;
+}
+
+/* Районы */
+.district-selector {
+  display: flex;
+  align-items: center;
+}
+
+.district-select {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  font-weight: 500;
+  color: #212121;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  outline: none;
+  transition: all 0.2s ease;
+  min-width: 160px;
+}
+
+.district-select:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.district-select:focus {
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+}
+
+/* Множественный выбор категорий */
+.category-filter-multi {
+  position: relative;
+}
+
+.category-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  max-width: 400px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.category-checkboxes-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.category-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 500;
+  color: #212121;
+  white-space: nowrap;
+}
+
+.category-checkbox:hover {
+  background: rgba(46, 125, 50, 0.1);
+}
+
+.category-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #2E7D32;
+}
+
+.category-checkboxes-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  background: #F9FAFB;
+}
+
+.category-checkboxes-form-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  background: #F9FAFB;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Поиск во вкладке Жалобы */
+.list-filters {
+  padding: 16px 20px;
+  background: white;
+  border-bottom: 1px solid #E0E0E0;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  position: sticky;
+  top: 73px;
+  z-index: 9;
+}
+
+.search-box {
+  flex: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #2E7D32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+.list-category-filter {
+  min-width: 180px;
+}
+
+.list-category-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  background: white;
+  max-width: 400px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.list-category-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-weight: 500;
+  color: #212121;
+  white-space: nowrap;
+}
+
+.list-category-checkbox:hover {
+  background: rgba(46, 125, 50, 0.1);
+}
+
+.list-category-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #2E7D32;
+}
+
+/* Адресный поиск */
+.address-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.address-input-group input {
+  flex: 1;
+}
+
+
+.address-search-button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #2E7D32;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  white-space: nowrap;
+}
+
+.address-search-button:hover {
+  background: #43A047;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(46, 125, 50, 0.3);
+}
+
+.location-info {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #616161;
+  font-style: italic;
+}
+
+/* Кнопки лайк/дизлайк */
+.vote-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.like-button,
+.dislike-button {
+  padding: 8px 16px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  background: white;
+  color: #212121;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.like-button:hover {
+  background: #E8F5E9;
+  border-color: #4CAF50;
+  color: #2E7D32;
+}
+
+.dislike-button:hover {
+  background: #FFEBEE;
+  border-color: #F44336;
+  color: #C62828;
+}
+
+.like-button:active {
+  transform: scale(0.95);
+}
+
+.dislike-button:active {
+  transform: scale(0.95);
+}
+
+.like-button.active {
+  background: #E8F5E9;
+  border-color: #4CAF50;
+  color: #2E7D32;
+}
+
+.dislike-button.active {
+  background: #FFEBEE;
+  border-color: #F44336;
+  color: #C62828;
+}
+
+/* Комментарий */
+.feedback-comment {
+  margin-top: 20px;
+  padding: 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border-left: 3px solid #2E7D32;
+}
+
+.feedback-comment strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #212121;
+  font-size: 14px;
+}
+
+.feedback-comment p {
+  margin: 0;
+  color: #616161;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Убираем preview фото (только изображения, видео оставляем) */
+.file-preview img {
+  display: none;
+}
+
+.file-preview span {
+  display: none;
+}
+
+/* Адаптивность для новых элементов */
+@media (max-width: 768px) {
+  .filters-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .district-select {
+    width: 100%;
+  }
+
+  .category-checkboxes {
+    max-width: 100%;
+  }
+
+  .list-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input,
+  .list-category-select {
+    width: 100%;
+  }
+
+  .address-input-group {
+    flex-direction: column;
+  }
+
+  .address-search-button {
+    width: 100%;
+  }
+
+  .vote-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .like-button,
+  .dislike-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .map-style-controls {
+    top: 70px;
+    left: 16px;
+  }
 }
