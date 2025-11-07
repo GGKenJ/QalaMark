@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import LoginOverlay from '../components/LoginOverlay';
 import './MapPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -13,6 +15,8 @@ const CITIES = [
 ];
 
 const MapPage = () => {
+  const { isAuthenticated, checkAuth } = useAuth();
+  const [isAuthenticatedState, setIsAuthenticatedState] = useState(false);
   const [activeTab, setActiveTab] = useState('map');
   const [feedbacks, setFeedbacks] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -37,6 +41,26 @@ const MapPage = () => {
   const userMarkerRef = useRef(null);
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
+
+  // Проверка авторизации при загрузке
+  useEffect(() => {
+    const checkUserAuth = async () => {
+      const token = localStorage.getItem('qm_token');
+      if (token) {
+        const authResult = await checkAuth();
+        setIsAuthenticatedState(authResult);
+      } else {
+        setIsAuthenticatedState(false);
+      }
+    };
+    checkUserAuth();
+  }, [checkAuth]);
+
+  // Обработчик успешного логина
+  const handleLoginSuccess = async () => {
+    const authResult = await checkAuth();
+    setIsAuthenticatedState(authResult);
+  };
 
   // Определение местоположения пользователя
   useEffect(() => {
@@ -206,9 +230,6 @@ const MapPage = () => {
         break;
       case 'map':
         map.setType('yandex#map', { checkZoomRange: true });
-        break;
-      case 'satellite':
-        map.setType('yandex#satellite', { checkZoomRange: true });
         break;
       default:
         map.setType('yandex#hybrid', { checkZoomRange: true });
@@ -445,9 +466,14 @@ const MapPage = () => {
     : feedbacks.filter(f => f.category === selectedCategory);
 
   return (
-    <div className="map-page">
+    <div className={`map-page ${!isAuthenticatedState ? 'blurred' : ''}`}>
+      {/* Логин оверлей */}
+      {!isAuthenticatedState && (
+        <LoginOverlay onLoginSuccess={handleLoginSuccess} />
+      )}
+
       {/* Верхняя панель */}
-      <div className="map-header">
+      <div className={`map-header ${!isAuthenticatedState ? 'disabled' : ''}`}>
         <button className="profile-button" onClick={handleProfileClick}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -473,7 +499,7 @@ const MapPage = () => {
 
       {/* Фильтры */}
       {activeTab === 'map' && (
-        <div className="filters-container">
+        <div className={`filters-container ${!isAuthenticatedState ? 'disabled' : ''}`}>
           <div className="city-selector">
             <select 
               className="city-select"
@@ -564,7 +590,7 @@ const MapPage = () => {
 
       {/* Кнопки переключения стиля карты */}
       {activeTab === 'map' && (
-        <div className="map-style-controls">
+        <div className={`map-style-controls ${!isAuthenticatedState ? 'disabled' : ''}`}>
           <button 
             className={`style-button ${mapStyle === 'map' ? 'active' : ''}`}
             onClick={() => handleMapStyleChange('map')}
@@ -584,16 +610,6 @@ const MapPage = () => {
               <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button 
-            className={`style-button ${mapStyle === 'satellite' ? 'active' : ''}`}
-            onClick={() => handleMapStyleChange('satellite')}
-            title="Спутник"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-              <path d="M12 6V18M6 12H18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
