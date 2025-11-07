@@ -4,7 +4,7 @@ const postgresPool = new Pool({
   host: 'localhost',
   user: 'postgres',
   password: 'password',
-  database: 'postgres',
+  database: 'qalamark',
   port: 5432
 });
 
@@ -56,8 +56,9 @@ async function initDatabase() {
         lat DECIMAL(10, 7) NOT NULL,
         lon DECIMAL(10, 7) NOT NULL,
         photo_url TEXT,
+        video_url TEXT,
         votes INTEGER DEFAULT 0,
-        status VARCHAR(20) DEFAULT 'active',
+        status VARCHAR(20) DEFAULT 'new',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);

@@ -21,27 +21,44 @@ const storage = multer.diskStorage({
   }
 });
 
-// Фильтр файлов (только изображения)
+// Фильтр файлов (изображения и видео)
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+  const allowedImageTypes = /jpeg|jpg|png|gif|webp/;
+  const allowedVideoTypes = /mp4|webm|ogg|mov/;
+  const extname = path.extname(file.originalname).toLowerCase();
   
-  if (extname && mimetype) {
-    cb(null, true);
+  if (file.fieldname === 'photo') {
+    const isImage = allowedImageTypes.test(extname) && allowedImageTypes.test(file.mimetype);
+    if (isImage) {
+      cb(null, true);
+    } else {
+      cb(new Error('Разрешены только изображения (jpeg, jpg, png, gif, webp)'));
+    }
+  } else if (file.fieldname === 'video') {
+    const isVideo = allowedVideoTypes.test(extname) && allowedVideoTypes.test(file.mimetype);
+    if (isVideo) {
+      cb(null, true);
+    } else {
+      cb(new Error('Разрешены только видео (mp4, webm, ogg, mov)'));
+    }
   } else {
-    cb(new Error('Разрешены только изображения (jpeg, jpg, png, gif, webp)'));
+    cb(null, true);
   }
 };
 
-// Настройка multer
+// Настройка multer для фото и видео
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB
+    fileSize: 50 * 1024 * 1024 // 50MB
   },
   fileFilter: fileFilter
 });
 
-module.exports = upload;
+// Middleware для загрузки фото и видео
+const uploadFields = upload.fields([
+  { name: 'photo', maxCount: 1 },
+  { name: 'video', maxCount: 1 }
+]);
 
+module.exports = { upload, uploadFields };

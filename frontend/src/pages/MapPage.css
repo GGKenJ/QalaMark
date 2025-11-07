@@ -1,0 +1,834 @@
+.map-page {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+/* Верхняя панель */
+.map-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 20px;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Кнопка профиля */
+.profile-button {
+  position: absolute;
+  left: 20px;
+  top: 16px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #212121;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+}
+
+.profile-button:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+/* Контейнер вкладок */
+.tabs-container {
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  pointer-events: auto;
+}
+
+.tab-button {
+  padding: 10px 24px;
+  border: none;
+  background: transparent;
+  color: #616161;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.tab-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #212121;
+}
+
+.tab-button.active {
+  background: #2E7D32;
+  color: white;
+  font-weight: 600;
+}
+
+.tab-button.active:hover {
+  background: #43A047;
+}
+
+/* Контейнер фильтров */
+.filters-container {
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  pointer-events: auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.city-selector,
+.category-filter-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.city-select,
+.category-filter {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  font-weight: 500;
+  color: #212121;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.city-select {
+  font-weight: 600;
+  color: #2E7D32;
+  min-width: 140px;
+}
+
+.city-select:hover,
+.category-filter:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.city-select:focus,
+.category-filter:focus {
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
+}
+
+/* Контент карты */
+.map-content {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  position: relative;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Маркер местоположения пользователя */
+.user-location-marker {
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.user-location-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0288D1;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 2;
+  margin: 0 auto;
+}
+
+.user-location-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0288D1;
+  opacity: 0.6;
+  animation: pulse 2s infinite;
+  z-index: 1;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Маркеры жалоб */
+.custom-marker {
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+
+.marker-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  margin: 0 auto;
+  transition: transform 0.2s ease;
+}
+
+.custom-marker:hover .marker-dot {
+  transform: scale(1.2);
+  z-index: 1000;
+}
+
+.marker-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.4;
+  animation: markerPulse 2s infinite;
+  z-index: 1;
+}
+
+@keyframes markerPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+/* Popup */
+.marker-popup {
+  min-width: 250px;
+  max-width: 300px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  padding: 16px;
+}
+
+.marker-popup h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.marker-popup .category {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #2E7D32;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.marker-popup .description {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #616161;
+  line-height: 1.4;
+}
+
+.popup-photo {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  object-fit: cover;
+  max-height: 200px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.popup-photo:hover {
+  transform: scale(1.05);
+}
+
+.popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.votes {
+  font-size: 14px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.vote-button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #2E7D32;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.vote-button:hover {
+  background: #43A047;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Контролы стиля карты */
+.map-style-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.style-button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #616161;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.style-button:hover {
+  background: rgba(46, 125, 50, 0.1);
+  color: #2E7D32;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.style-button.active {
+  background: #2E7D32;
+  color: white;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.4);
+  transform: scale(1.05);
+}
+
+.style-button.active:hover {
+  background: #43A047;
+  transform: scale(1.05) translateY(-2px);
+}
+
+.style-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.list-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #F9FAFB;
+  overflow-y: auto;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border-bottom: 1px solid #E0E0E0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.list-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.add-feedback-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #2E7D32;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.add-feedback-button:hover {
+  background: #43A047;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+}
+
+.feedbacks-list {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feedback-item {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feedback-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.feedback-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.feedback-item-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.feedback-category {
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: #2E7D32;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.feedback-description {
+  margin: 8px 0;
+  color: #616161;
+  font-size: 14px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.feedback-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #E0E0E0;
+}
+
+.feedback-votes {
+  font-size: 14px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.feedback-date {
+  font-size: 12px;
+  color: #616161;
+}
+
+.empty-list {
+  text-align: center;
+  color: #616161;
+  font-size: 18px;
+  padding: 40px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .map-header {
+    padding: 12px 16px;
+  }
+
+  .profile-button {
+    width: 44px;
+    height: 44px;
+    left: 16px;
+    top: 12px;
+  }
+
+  .tabs-container {
+    padding: 3px;
+    gap: 4px;
+  }
+
+  .tab-button {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .filters-container {
+    top: 70px;
+    right: 16px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .city-select,
+  .category-filter {
+    padding: 8px 12px;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .map-style-controls {
+    bottom: 16px;
+    right: 16px;
+    flex-direction: row;
+  }
+
+  .list-header {
+    padding: 16px;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .add-feedback-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Модальные окна */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #E0E0E0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+  border-radius: 16px 16px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #616161;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #F5F5F5;
+  color: #212121;
+}
+
+/* Форма добавления жалобы */
+.feedback-form {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #212121;
+}
+
+.form-group input[type="text"],
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #2E7D32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-group input[type="file"] {
+  padding: 8px;
+  border: 2px dashed #E0E0E0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.form-group input[type="file"]:hover {
+  border-color: #2E7D32;
+  background: rgba(46, 125, 50, 0.05);
+}
+
+.file-preview {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.file-preview video {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+}
+
+.file-preview span {
+  font-size: 12px;
+  color: #616161;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #E0E0E0;
+}
+
+.cancel-button,
+.submit-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.cancel-button {
+  background: #F5F5F5;
+  color: #616161;
+}
+
+.cancel-button:hover {
+  background: #E0E0E0;
+}
+
+.submit-button {
+  background: #2E7D32;
+  color: white;
+}
+
+.submit-button:hover {
+  background: #43A047;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+}
+
+/* Просмотр жалобы */
+.feedback-view {
+  padding: 20px;
+}
+
+.feedback-view-category {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: #2E7D32;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.feedback-view-description {
+  margin: 16px 0;
+  color: #212121;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.feedback-view-photo {
+  width: 100%;
+  border-radius: 12px;
+  margin: 16px 0;
+  object-fit: cover;
+  max-height: 400px;
+}
+
+.feedback-view-video {
+  width: 100%;
+  border-radius: 12px;
+  margin: 16px 0;
+  max-height: 400px;
+}
+
+.feedback-view-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #E0E0E0;
+}
+
+.feedback-view-votes {
+  font-size: 18px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.feedback-view-date {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #616161;
+  text-align: right;
+}

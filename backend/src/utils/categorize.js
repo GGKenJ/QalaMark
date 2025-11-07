@@ -11,29 +11,23 @@ function categorize(text) {
   // Категория "дорога" / "road"
   const roadKeywords = ['дорога', 'яма', 'выбоина', 'асфальт', 'тротуар', 'road', 'pothole'];
   if (roadKeywords.some(keyword => lowerText.includes(keyword))) {
-    return 'дорога';
+    return 'road';
   }
   
   // Категория "мусор" / "запах" → ecology
-  const ecologyKeywords = ['мусор', 'запах', 'вонь', 'отходы', 'свалка', 'контейнер', 'trash', 'garbage', 'smell'];
+  const ecologyKeywords = ['мусор', 'запах', 'вонь', 'отходы', 'свалка', 'контейнер', 'trash', 'garbage', 'smell', 'экология', 'ecology'];
   if (ecologyKeywords.some(keyword => lowerText.includes(keyword))) {
-    return 'мусор';
+    return 'ecology';
   }
   
   // Категория "освещение" / "lighting"
-  const lightingKeywords = ['фонарь', 'жарық', 'освещение', 'лампа', 'темнота', 'свет', 'light', 'lamp', 'dark'];
+  const lightingKeywords = ['фонарь', 'жарық', 'освещение', 'лампа', 'темнота', 'свет', 'light', 'lamp', 'dark', 'lighting'];
   if (lightingKeywords.some(keyword => lowerText.includes(keyword))) {
-    return 'освещение';
-  }
-  
-  // Категория "вода"
-  const waterKeywords = ['вода', 'канализация', 'лужа', 'протечка', 'затопление', 'water', 'sewer', 'leak'];
-  if (waterKeywords.some(keyword => lowerText.includes(keyword))) {
-    return 'вода';
+    return 'lighting';
   }
   
   // По умолчанию
-  return 'другое';
+  return 'other';
 }
 
 module.exports = { categorize };
