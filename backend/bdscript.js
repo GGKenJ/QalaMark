@@ -1,5 +1,15 @@
 const { Pool } = require('pg');
 
+// Пул для подключения к системной БД postgres (для создания БД)
+const systemPool = new Pool({
+  host: 'localhost',
+  user: 'postgres',
+  password: 'password',
+  database: 'postgres',
+  port: 5432
+});
+
+// Пул для работы с БД qalamark (для создания таблиц)
 const postgresPool = new Pool({
   host: 'localhost',
   user: 'postgres',
@@ -7,6 +17,31 @@ const postgresPool = new Pool({
   database: 'qalamark',
   port: 5432
 });
+
+async function createDatabase() {
+  const client = await systemPool.connect();
+  
+  try {
+    // Проверяем, существует ли база данных
+    const result = await client.query(
+      "SELECT 1 FROM pg_database WHERE datname = 'qalamark'"
+    );
+    
+    if (result.rows.length === 0) {
+      console.log('📦 Создаю базу данных qalamark...');
+      await client.query('CREATE DATABASE qalamark');
+      console.log('✅ База данных qalamark создана!\n');
+    } else {
+      console.log('✅ База данных qalamark уже существует\n');
+    }
+  } catch (error) {
+    console.error('❌ Ошибка при создании базы данных:', error.message);
+    throw error;
+  } finally {
+    client.release();
+    await systemPool.end();
+  }
+}
 
 async function initDatabase() {
   const client = await postgresPool.connect();
@@ -112,11 +147,25 @@ async function initDatabase() {
     await client.query('CREATE INDEX idx_comments_feedback_id ON comments(feedback_id);');
     console.log('✅ Индексы созданы');
 
+    // Проверяем и добавляем колонку video_url, если её нет
+    console.log('\n🎬 Проверка колонки video_url...');
+    const videoColumnCheck = await client.query(
+      "SELECT column_name FROM information_schema.columns WHERE table_name = 'feedbacks' AND column_name = 'video_url'"
+    );
+    
+    if (videoColumnCheck.rows.length === 0) {
+      console.log('📹 Добавляю поле video_url...');
+      await client.query('ALTER TABLE feedbacks ADD COLUMN video_url TEXT');
+      console.log('✅ Поле video_url добавлено!');
+    } else {
+      console.log('✅ Поле video_url уже существует');
+    }
+
     console.log('\n✨ База данных QalaMark успешно инициализирована!');
     console.log('\n📊 Созданные таблицы:');
     console.log('   - users (id, username, password_hash, role)');
     console.log('   - categories (name, keywords[])');
-    console.log('   - feedbacks (id, title, description, category, lat, lon, photo_url, votes, status, created_at)');
+    console.log('   - feedbacks (id, title, description, category, lat, lon, photo_url, video_url, votes, status, created_at)');
     console.log('   - likes (голоса пользователей)');
     console.log('   - comments (комментарии)');
     
@@ -129,8 +178,15 @@ async function initDatabase() {
   }
 }
 
-// Запускаем инициализацию
-initDatabase()
+// Запускаем создание БД, затем инициализацию таблиц
+createDatabase()
+  .then(() => {
+    // Небольшая задержка для завершения создания БД в PostgreSQL
+    return new Promise(resolve => setTimeout(resolve, 500));
+  })
+  .then(() => {
+    return initDatabase();
+  })
   .then(() => {
     console.log('\n🎉 Готово! Можно запускать приложение.');
     process.exit(0);
