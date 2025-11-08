@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import LoginOverlay from '../components/LoginOverlay';
+import MobileFilters from '../components/MobileFilters';
 import './MapPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -697,14 +698,33 @@ const MapPage = () => {
 
       {/* Верхняя панель */}
       <div className={`map-header ${!isAuthenticatedState ? 'disabled' : ''}`}>
+        {/* Бургер-меню для мобильных - только во вкладке "Карта", вместо профиля */}
         {activeTab === 'map' && (
-          <button className="profile-button" onClick={handleProfileClick}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <div className="mobile-burger-wrapper">
+            <MobileFilters
+              cities={CITIES}
+              selectedCity={selectedCity}
+              onCityChange={handleCityChange}
+              selectedDistrict={selectedDistrict}
+              onDistrictChange={setSelectedDistrict}
+              currentCity={currentCity}
+              categories={CATEGORIES}
+              selectedCategories={selectedCategories}
+              onCategoryToggle={handleCategoryToggle}
+            />
+          </div>
         )}
+
+        {/* Кнопка профиля - всегда в левом верхнем углу, скрыта на мобильных во вкладке "Карта" */}
+        <button 
+          className={`profile-button ${activeTab === 'map' ? 'hidden-on-mobile' : ''}`}
+          onClick={handleProfileClick}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
 
         <div className="header-content">
           <div className="tabs-container">
@@ -795,15 +815,6 @@ const MapPage = () => {
         )}
         {activeTab === 'list' && (
           <div className="list-container">
-            <div className="list-header">
-              <button className="add-feedback-button" onClick={openAddModal}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Добавить жалобу
-              </button>
-            </div>
-            
             {/* Фильтр и поиск */}
             <div className="list-filters">
               <div className="search-box">
@@ -829,6 +840,12 @@ const MapPage = () => {
                   ))}
                 </div>
               </div>
+              <button className="add-feedback-button" onClick={openAddModal}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Добавить жалобу
+              </button>
             </div>
 
             <div className="feedbacks-list">

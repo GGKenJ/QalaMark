@@ -55,6 +55,8 @@
   align-items: center;
   gap: 12px;
   width: 100%;
+  pointer-events: auto;
+  z-index: 1002;
 }
 
 /* Селекторы города и района в правом верхнем углу */
@@ -64,6 +66,7 @@
   right: 20px;
   z-index: 1001;
   display: flex;
+  flex-direction: row;
   gap: 12px;
   align-items: center;
   pointer-events: auto;
@@ -83,7 +86,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Кнопка профиля */
+/* Кнопка профиля - всегда в левом верхнем углу */
 .profile-button {
   position: absolute;
   left: 20px;
@@ -102,6 +105,7 @@
   color: #212121;
   transition: all 0.2s ease;
   pointer-events: auto;
+  z-index: 1001;
 }
 
 .profile-button:hover {
@@ -166,6 +170,7 @@
 .category-filter-wrapper {
   display: flex;
   align-items: center;
+  background: transparent;
 }
 
 .city-select,
@@ -519,8 +524,9 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #F9FAFB;
+  background: white;
   overflow-y: auto;
+  position: relative;
 }
 
 .list-header {
@@ -562,6 +568,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  background: white;
+  margin-top: 0;
 }
 
 .feedback-item {
@@ -655,6 +663,17 @@
     top: 12px;
   }
 
+  /* Бургер-меню на мобильных - вместо профиля во вкладке "Карта" */
+  .mobile-burger-wrapper {
+    left: 16px;
+    top: 12px;
+  }
+
+  /* Скрыть профиль во вкладке "Карта" на мобильных */
+  .profile-button.hidden-on-mobile {
+    display: none;
+  }
+
   .tabs-container {
     padding: 3px;
     gap: 4px;
@@ -686,16 +705,27 @@
     flex-direction: row;
   }
 
-  .list-header {
-    padding: 16px;
+  .top-right-selectors {
+    top: 80px;
     flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .top-right-selectors .city-select,
+  .top-right-selectors .district-select {
+    min-width: 140px;
+    width: auto;
+  }
+
+  .header-categories {
+    top: 180px;
   }
 
   .add-feedback-button {
     width: 100%;
     justify-content: center;
+    margin-top: 12px;
   }
 }
 
@@ -1008,13 +1038,13 @@
   backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   font-size: 14px;
-  font-weight: 500;
-  color: #212121;
+  font-weight: 600;
+  color: #2E7D32;
   cursor: pointer;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   outline: none;
   transition: all 0.2s ease;
-  min-width: 160px;
+  min-width: 140px;
 }
 
 .district-select:hover {
@@ -1049,11 +1079,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  padding: 8px;
+  background: transparent;
+  padding: 0;
   max-height: 300px;
   overflow-y: auto;
 }
@@ -1114,8 +1141,10 @@
   gap: 12px;
   align-items: center;
   position: sticky;
-  top: 73px;
-  z-index: 9;
+  top: 73px; /* Ниже уровня кнопок вкладок и профиля */
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-top: 0;
 }
 
 .search-box {
@@ -1325,6 +1354,17 @@
   .list-filters {
     flex-direction: column;
     align-items: stretch;
+    top: 73px; /* Ниже уровня кнопок вкладок и профиля на мобильных */
+    padding: 12px 16px;
+  }
+
+  .list-container {
+    padding-top: 0;
+  }
+
+  .feedbacks-list {
+    padding-top: 0;
+    margin-top: 0;
   }
 
   .search-input,
@@ -1355,4 +1395,209 @@
     top: 70px;
     left: 16px;
   }
+
+  /* Скрыть десктопные фильтры на мобильных */
+  .top-right-selectors {
+    display: none;
+  }
+
+  .header-categories {
+    display: none;
+  }
+
+  /* Показать бургер-меню на мобильных */
+  .mobile-burger-wrapper {
+    display: block;
+  }
+}
+
+/* Скрыть бургер-меню на десктопе */
+@media (min-width: 769px) {
+  .mobile-burger-wrapper {
+    display: none;
+  }
+}
+
+/* Стили для бургер-меню */
+.mobile-burger-wrapper {
+  position: absolute;
+  left: 20px;
+  top: 16px;
+  z-index: 1003;
+  pointer-events: auto;
+  display: none; /* По умолчанию скрыто, показывается только на мобильных */
+}
+
+.burger-menu-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333333;
+  transition: all 0.3s ease;
+}
+
+.burger-menu-button:hover {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.burger-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.burger-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  max-width: 85vw;
+  height: 100vh;
+  background: white;
+  z-index: 2000;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+}
+
+.burger-drawer.open {
+  transform: translateX(0);
+}
+
+.burger-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 16px;
+  border-bottom: 1px solid #E0E0E0;
+  background: #F5F5F5;
+}
+
+.burger-drawer-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.burger-close-button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333333;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.burger-close-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.burger-drawer-content {
+  padding: 20px 16px;
+}
+
+.burger-filter-group {
+  margin-bottom: 24px;
+}
+
+.burger-filter-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.burger-city-select,
+.burger-district-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2E7D32;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.burger-city-select:hover,
+.burger-district-select:hover {
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.burger-city-select:focus,
+.burger-district-select:focus {
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.burger-category-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.burger-category-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.burger-category-checkbox:hover {
+  background: #F5F5F5;
+}
+
+.burger-category-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #4CAF50;
+}
+
+.burger-category-checkbox span {
+  font-size: 14px;
+  color: #333333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
 }
