@@ -33,6 +33,11 @@ export const useAuth = () => {
         body: JSON.stringify({
           username: data.phone, // Используем телефон как username
           password: data.password,
+          role: data.role || 'user',
+          position: data.position || null,
+          full_name: data.full_name || null,
+          email: data.email || null,
+          phone: data.phone,
         }),
       });
 

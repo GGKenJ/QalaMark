@@ -18,6 +18,28 @@
   user-select: none;
 }
 
+.map-page.profile-open .map-content,
+.map-page.profile-open .map-header,
+.map-page.profile-open .filters-container,
+.map-page.profile-open .map-style-controls,
+.map-page.profile-open .top-right-selectors,
+.map-page.profile-open .header-categories {
+  filter: blur(8px);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Исключаем Profile из блюра */
+.map-page.profile-open .profile-overlay {
+  filter: none !important;
+  pointer-events: auto !important;
+}
+
+.map-page.profile-open .profile-overlay * {
+  filter: none !important;
+  pointer-events: auto !important;
+}
+
 /* Исключаем LoginOverlay из блюра */
 .map-page.blurred .login-overlay {
   filter: none !important;
@@ -763,6 +785,29 @@
 .file-input:hover {
   border-color: #2E7D32;
   background: rgba(46, 125, 50, 0.05);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #212121;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #2E7D32;
+}
+
+.anonymous-checkbox {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E0E0E0;
 }
 
 .form-group {

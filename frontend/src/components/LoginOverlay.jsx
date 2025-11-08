@@ -13,6 +13,19 @@ const LoginOverlay = ({ onLoginSuccess }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const password = watch('password');
+  const role = watch('role');
+  
+  // Должности для сотрудников
+  const POSITIONS = [
+    { id: 'police', name: 'Полицейский' },
+    { id: 'plumber', name: 'Сантехник' },
+    { id: 'electrician', name: 'Электрик' },
+    { id: 'road_worker', name: 'Дорожный рабочий' },
+    { id: 'garbage_collector', name: 'Сборщик мусора' },
+    { id: 'lighting_worker', name: 'Рабочий по освещению' },
+    { id: 'park_worker', name: 'Рабочий парков' },
+    { id: 'other', name: 'Другое' }
+  ];
 
   // Очистка ошибки при изменении полей
   const phoneValue = watch('phone');
@@ -152,37 +165,104 @@ const LoginOverlay = ({ onLoginSuccess }) => {
             </div>
 
             {!isLoginMode && (
-              <div className="form-group">
-                <label htmlFor="confirmPassword">Подтвердите пароль</label>
-                <div className="password-input-wrapper">
-                  <input
-                    {...registerForm('confirmPassword', { 
-                      required: 'Подтверждение пароля обязательно',
-                      validate: value => value === password || 'Пароли не совпадают'
-                    })}
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    id="confirmPassword"
-                    autoComplete="new-password"
-                    placeholder="Повторите пароль"
-                    className={errors.confirmPassword ? 'input-error' : ''}
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff size={20} />
-                    ) : (
-                      <Eye size={20} />
-                    )}
-                  </button>
+              <>
+                <div className="form-group">
+                  <label htmlFor="confirmPassword">Подтвердите пароль</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      {...registerForm('confirmPassword', { 
+                        required: 'Подтверждение пароля обязательно',
+                        validate: value => value === password || 'Пароли не совпадают'
+                      })}
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      id="confirmPassword"
+                      autoComplete="new-password"
+                      placeholder="Повторите пароль"
+                      className={errors.confirmPassword ? 'input-error' : ''}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={20} />
+                      ) : (
+                        <Eye size={20} />
+                      )}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && (
+                    <span className="field-error">{errors.confirmPassword.message}</span>
+                  )}
                 </div>
-                {errors.confirmPassword && (
-                  <span className="field-error">{errors.confirmPassword.message}</span>
+
+                <div className="form-group">
+                  <label htmlFor="role">Роль</label>
+                  <select
+                    {...registerForm('role', { required: 'Выберите роль' })}
+                    id="role"
+                    className={errors.role ? 'input-error' : ''}
+                  >
+                    <option value="user">Обычный пользователь</option>
+                    <option value="employee">Сотрудник</option>
+                  </select>
+                  {errors.role && (
+                    <span className="field-error">{errors.role.message}</span>
+                  )}
+                </div>
+
+                {role === 'employee' && (
+                  <div className="form-group">
+                    <label htmlFor="position">Должность *</label>
+                    <select
+                      {...registerForm('position', { 
+                        required: role === 'employee' ? 'Выберите должность' : false 
+                      })}
+                      id="position"
+                      className={errors.position ? 'input-error' : ''}
+                    >
+                      <option value="">Выберите должность</option>
+                      {POSITIONS.map(pos => (
+                        <option key={pos.id} value={pos.id}>{pos.name}</option>
+                      ))}
+                    </select>
+                    {errors.position && (
+                      <span className="field-error">{errors.position.message}</span>
+                    )}
+                  </div>
                 )}
-              </div>
+
+                <div className="form-group">
+                  <label htmlFor="full_name">ФИО</label>
+                  <input
+                    {...registerForm('full_name')}
+                    type="text"
+                    id="full_name"
+                    placeholder="Введите ваше полное имя"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="email">Email</label>
+                  <input
+                    {...registerForm('email', {
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: 'Неверный формат email'
+                      }
+                    })}
+                    type="email"
+                    id="email"
+                    placeholder="example@mail.com"
+                    className={errors.email ? 'input-error' : ''}
+                  />
+                  {errors.email && (
+                    <span className="field-error">{errors.email.message}</span>
+                  )}
+                </div>
+              </>
             )}
 
             <button
