@@ -25,7 +25,7 @@ const authenticateToken = (req, res, next) => {
 // POST /api/auth/register - регистрация
 router.post('/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, role, position, full_name, email, phone } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Имя пользователя и пароль обязательны' });
@@ -33,6 +33,11 @@ router.post('/register', async (req, res) => {
 
     if (password.length < 6) {
       return res.status(400).json({ error: 'Пароль должен содержать минимум 6 символов' });
+    }
+
+    // Если сотрудник, проверяем наличие должности
+    if (role === 'employee' && !position) {
+      return res.status(400).json({ error: 'Для сотрудника необходимо указать должность' });
     }
 
     // Проверяем, существует ли пользователь
@@ -46,15 +51,17 @@ router.post('/register', async (req, res) => {
 
     // Создаем пользователя
     const result = await pool.query(
-      'INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, username, role',
-      [username, passwordHash]
+      `INSERT INTO users (username, password_hash, role, position, full_name, email, phone) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       RETURNING id, username, role, position, full_name, email, phone`,
+      [username, passwordHash, role || 'user', position || null, full_name || null, email || null, phone || username]
     );
 
     const user = result.rows[0];
 
     // Генерируем токен
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
+      { id: user.id, username: user.username, role: user.role, position: user.position },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '30d' }
     );
@@ -64,7 +71,11 @@ router.post('/register', async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        role: user.role
+        role: user.role,
+        position: user.position,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone
       }
     });
   } catch (error) {
@@ -120,7 +131,10 @@ router.post('/login', async (req, res) => {
 // GET /api/auth/me - получение информации о текущем пользователе
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, username, role FROM users WHERE id = $1', [req.user.id]);
+    const result = await pool.query(
+      'SELECT id, username, role, position, full_name, email, phone, created_at FROM users WHERE id = $1', 
+      [req.user.id]
+    );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Пользователь не найден' });
     }

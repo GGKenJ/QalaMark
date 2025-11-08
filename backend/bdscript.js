@@ -65,7 +65,12 @@ async function initDatabase() {
         id SERIAL PRIMARY KEY,
         username VARCHAR(50) UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
-        role VARCHAR(20) DEFAULT 'user'
+        role VARCHAR(20) DEFAULT 'user',
+        position VARCHAR(100),
+        full_name VARCHAR(100),
+        email VARCHAR(100),
+        phone VARCHAR(20),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
     console.log('✅ Таблица users создана');
@@ -93,19 +98,25 @@ async function initDatabase() {
         photo_url TEXT,
         video_url TEXT,
         votes INTEGER DEFAULT 0,
+        dislikes INTEGER DEFAULT 0,
         status VARCHAR(20) DEFAULT 'new',
+        user_id INT REFERENCES users(id) ON DELETE SET NULL,
+        is_anonymous BOOLEAN DEFAULT false,
+        address TEXT,
+        comment TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
     console.log('✅ Таблица feedbacks создана');
 
-    // 4. Создаём таблицу likes
+    // 4. Создаём таблицу likes (лайки и дизлайки)
     console.log('👍 Создание таблицы likes...');
     await client.query(`
       CREATE TABLE likes (
         id SERIAL PRIMARY KEY,
         feedback_id INT REFERENCES feedbacks(id) ON DELETE CASCADE,
         user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        vote_type VARCHAR(10) DEFAULT 'like',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE (feedback_id, user_id)
       );
@@ -120,10 +131,24 @@ async function initDatabase() {
         feedback_id INT REFERENCES feedbacks(id) ON DELETE CASCADE,
         user_id INT REFERENCES users(id) ON DELETE SET NULL,
         text TEXT NOT NULL,
+        is_anonymous BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
     console.log('✅ Таблица comments создана');
+
+    // 6. Создаём таблицу completed_works (завершенные работы сотрудников)
+    console.log('✅ Создание таблицы completed_works...');
+    await client.query(`
+      CREATE TABLE completed_works (
+        id SERIAL PRIMARY KEY,
+        feedback_id INT REFERENCES feedbacks(id) ON DELETE CASCADE,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        feedback_data JSONB
+      );
+    `);
+    console.log('✅ Таблица completed_works создана');
 
     // Добавляем начальные категории
     console.log('\n🎨 Добавление начальных категорий...');
@@ -143,31 +168,60 @@ async function initDatabase() {
     await client.query('CREATE INDEX idx_feedbacks_status ON feedbacks(status);');
     await client.query('CREATE INDEX idx_feedbacks_category ON feedbacks(category);');
     await client.query('CREATE INDEX idx_feedbacks_location ON feedbacks(lat, lon);');
+    await client.query('CREATE INDEX idx_feedbacks_user_id ON feedbacks(user_id);');
     await client.query('CREATE INDEX idx_likes_feedback_id ON likes(feedback_id);');
+    await client.query('CREATE INDEX idx_likes_user_id ON likes(user_id);');
     await client.query('CREATE INDEX idx_comments_feedback_id ON comments(feedback_id);');
+    await client.query('CREATE INDEX idx_comments_user_id ON comments(user_id);');
+    await client.query('CREATE INDEX idx_completed_works_user_id ON completed_works(user_id);');
     console.log('✅ Индексы созданы');
 
-    // Проверяем и добавляем колонку video_url, если её нет
-    console.log('\n🎬 Проверка колонки video_url...');
-    const videoColumnCheck = await client.query(
-      "SELECT column_name FROM information_schema.columns WHERE table_name = 'feedbacks' AND column_name = 'video_url'"
-    );
+    // Проверяем и добавляем новые колонки, если их нет
+    console.log('\n🔍 Проверка и добавление новых полей...');
     
-    if (videoColumnCheck.rows.length === 0) {
-      console.log('📹 Добавляю поле video_url...');
-      await client.query('ALTER TABLE feedbacks ADD COLUMN video_url TEXT');
-      console.log('✅ Поле video_url добавлено!');
-    } else {
-      console.log('✅ Поле video_url уже существует');
+    const columnsToCheck = [
+      { name: 'video_url', type: 'TEXT', table: 'feedbacks' },
+      { name: 'dislikes', type: 'INTEGER DEFAULT 0', table: 'feedbacks' },
+      { name: 'user_id', type: 'INT REFERENCES users(id) ON DELETE SET NULL', table: 'feedbacks' },
+      { name: 'is_anonymous', type: 'BOOLEAN DEFAULT false', table: 'feedbacks' },
+      { name: 'address', type: 'TEXT', table: 'feedbacks' },
+      { name: 'comment', type: 'TEXT', table: 'feedbacks' },
+      { name: 'position', type: 'VARCHAR(100)', table: 'users' },
+      { name: 'full_name', type: 'VARCHAR(100)', table: 'users' },
+      { name: 'email', type: 'VARCHAR(100)', table: 'users' },
+      { name: 'phone', type: 'VARCHAR(20)', table: 'users' },
+      { name: 'created_at', type: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP', table: 'users' },
+      { name: 'vote_type', type: "VARCHAR(10) DEFAULT 'like'", table: 'likes' },
+      { name: 'is_anonymous', type: 'BOOLEAN DEFAULT false', table: 'comments' }
+    ];
+
+    for (const col of columnsToCheck) {
+      const check = await client.query(
+        `SELECT column_name FROM information_schema.columns 
+         WHERE table_name = '${col.table}' AND column_name = '${col.name}'`
+      );
+      
+      if (check.rows.length === 0) {
+        console.log(`📝 Добавляю поле ${col.name} в таблицу ${col.table}...`);
+        try {
+          await client.query(`ALTER TABLE ${col.table} ADD COLUMN ${col.name} ${col.type}`);
+          console.log(`✅ Поле ${col.name} добавлено!`);
+        } catch (err) {
+          console.log(`⚠️  Не удалось добавить ${col.name}: ${err.message}`);
+        }
+      } else {
+        console.log(`✅ Поле ${col.name} уже существует`);
+      }
     }
 
     console.log('\n✨ База данных QalaMark успешно инициализирована!');
     console.log('\n📊 Созданные таблицы:');
-    console.log('   - users (id, username, password_hash, role)');
+    console.log('   - users (id, username, password_hash, role, position, full_name, email, phone, created_at)');
     console.log('   - categories (name, keywords[])');
-    console.log('   - feedbacks (id, title, description, category, lat, lon, photo_url, video_url, votes, status, created_at)');
-    console.log('   - likes (голоса пользователей)');
+    console.log('   - feedbacks (id, title, description, category, lat, lon, photo_url, video_url, votes, dislikes, status, user_id, is_anonymous, address, comment, created_at)');
+    console.log('   - likes (лайки и дизлайки пользователей)');
     console.log('   - comments (комментарии)');
+    console.log('   - completed_works (завершенные работы сотрудников)');
     
   } catch (error) {
     console.error('❌ Ошибка при инициализации базы данных:', error);

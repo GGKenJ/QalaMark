@@ -27,11 +27,17 @@ app.use('/uploads', express.static('uploads'));
 // Подключение роутов
 const authRoutes = require('./routes/auth');
 const feedbackRoutes = require('./routes/feedback');
+const userRoutes = require('./routes/user');
+const employeeRoutes = require('./routes/employee');
 const adminRoutes = require('./routes/admin');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', feedbackRoutes);
-app.use('/api', adminRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/employee', employeeRoutes);
+if (adminRoutes) {
+  app.use('/api', adminRoutes);
+}
 
 // Базовый роут для проверки
 app.get('/', (req, res) => {

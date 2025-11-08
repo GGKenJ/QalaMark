@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import LoginOverlay from '../components/LoginOverlay';
 import MobileFilters from '../components/MobileFilters';
+import Profile from '../components/Profile';
 import './MapPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -101,8 +102,11 @@ const MapPage = () => {
     comment: '',
     photo: null,
     video: null,
-    address: ''
+    address: '',
+    is_anonymous: false
   });
+  const [showProfile, setShowProfile] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
@@ -118,6 +122,22 @@ const MapPage = () => {
       if (token) {
         const authResult = await checkAuth();
         setIsAuthenticatedState(authResult);
+        if (authResult) {
+          // Загружаем данные пользователя
+          try {
+            const response = await fetch(`${API_URL}/api/auth/me`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            if (response.ok) {
+              const userData = await response.json();
+              setCurrentUser(userData);
+            }
+          } catch (error) {
+            console.error('Ошибка загрузки данных пользователя:', error);
+          }
+        }
       } else {
         setIsAuthenticatedState(false);
       }
@@ -129,6 +149,23 @@ const MapPage = () => {
   const handleLoginSuccess = async () => {
     const authResult = await checkAuth();
     setIsAuthenticatedState(authResult);
+    if (authResult) {
+      // Загружаем данные пользователя
+      try {
+        const token = localStorage.getItem('qm_token');
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUser(userData);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки данных пользователя:', error);
+      }
+    }
   };
 
   // Определение местоположения пользователя
@@ -494,6 +531,7 @@ const MapPage = () => {
       formDataToSend.append('category', formData.categories[0] || 'other');
       formDataToSend.append('lat', newFeedbackLocation.lat);
       formDataToSend.append('lon', newFeedbackLocation.lon);
+      formDataToSend.append('is_anonymous', formData.is_anonymous ? 'true' : 'false');
       
       if (formData.photo) {
         formDataToSend.append('photo', formData.photo);
@@ -522,7 +560,8 @@ const MapPage = () => {
           comment: '',
           photo: null,
           video: null,
-          address: ''
+          address: '',
+          is_anonymous: false
         });
         setNewFeedbackLocation(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -561,7 +600,7 @@ const MapPage = () => {
   };
 
   const handleProfileClick = () => {
-    console.log('Profile clicked');
+    setShowProfile(true);
   };
 
   const handleCityChange = (cityId) => {
@@ -690,7 +729,7 @@ const MapPage = () => {
   const currentCity = CITIES.find(c => c.id === selectedCity) || CITIES[0];
 
   return (
-    <div className={`map-page ${!isAuthenticatedState ? 'blurred' : ''}`}>
+    <div className={`map-page ${!isAuthenticatedState ? 'blurred' : ''} ${showProfile ? 'profile-open' : ''}`}>
       {/* Логин оверлей */}
       {!isAuthenticatedState && (
         <LoginOverlay onLoginSuccess={handleLoginSuccess} />
@@ -943,7 +982,8 @@ const MapPage = () => {
             comment: '',
             photo: null,
             video: null,
-            address: ''
+            address: '',
+            is_anonymous: false
           });
           setNewFeedbackLocation(null);
           if (fileInputRef.current) fileInputRef.current.value = '';
@@ -961,7 +1001,8 @@ const MapPage = () => {
                   comment: '',
                   photo: null,
                   video: null,
-                  address: ''
+                  address: '',
+                  is_anonymous: false
                 });
                 setNewFeedbackLocation(null);
                 if (fileInputRef.current) fileInputRef.current.value = '';
@@ -1073,6 +1114,18 @@ const MapPage = () => {
                   </div>
                 </div>
               </div>
+              {currentUser?.role === 'user' && (
+                <div className="form-group anonymous-checkbox">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={formData.is_anonymous}
+                      onChange={(e) => setFormData(prev => ({ ...prev, is_anonymous: e.target.checked }))}
+                    />
+                    <span>Опубликовать анонимно</span>
+                  </label>
+                </div>
+              )}
               <div className="form-actions">
                 <button type="button" className="cancel-button" onClick={() => {
                   setShowAddModal(false);
@@ -1083,7 +1136,8 @@ const MapPage = () => {
                     comment: '',
                     photo: null,
                     video: null,
-                    address: ''
+                    address: '',
+                    is_anonymous: false
                   });
                   setNewFeedbackLocation(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
@@ -1163,6 +1217,11 @@ const MapPage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Профиль */}
+      {showProfile && (
+        <Profile onClose={() => setShowProfile(false)} />
       )}
     </div>
   );
