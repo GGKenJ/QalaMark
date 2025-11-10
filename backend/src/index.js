@@ -1,8 +1,11 @@
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
 // CORS настройки для фронтенда
@@ -14,6 +17,18 @@ const corsOptions = {
   credentials: false, // JWT передаём через Authorization, куки не используем
   optionsSuccessStatus: 204
 };
+
+// Настройка Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: FRONTEND_ORIGIN,
+    methods: ['GET', 'POST'],
+    credentials: false
+  }
+});
+
+// Экспортируем io для использования в роутах
+app.set('io', io);
 
 // Middleware
 app.use(cors(corsOptions));
@@ -30,11 +45,15 @@ const feedbackRoutes = require('./routes/feedback');
 const userRoutes = require('./routes/user');
 const employeeRoutes = require('./routes/employee');
 const adminRoutes = require('./routes/admin');
+const solutionRoutes = require('./routes/solution');
+const { router: notificationRoutes } = require('./routes/notification');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', feedbackRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/employee', employeeRoutes);
+app.use('/api', solutionRoutes);
+app.use('/api', notificationRoutes);
 if (adminRoutes) {
   app.use('/api', adminRoutes);
 }
@@ -55,11 +74,21 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Внутренняя ошибка сервера' });
 });
 
-// Запуск сервера
-app.listen(PORT, () => {
-  console.log(`🚀 Сервер запущен на порту ${PORT}`);
-  console.log(`📡 API доступно по адресу http://localhost:${PORT}/api`);
+// WebSocket подключения
+io.on('connection', (socket) => {
+  console.log('✅ Клиент подключен:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('❌ Клиент отключен:', socket.id);
+  });
 });
 
-module.exports = app;
+// Запуск сервера
+server.listen(PORT, () => {
+  console.log(`🚀 Сервер запущен на порту ${PORT}`);
+  console.log(`📡 API доступно по адресу http://localhost:${PORT}/api`);
+  console.log(`🔌 WebSocket сервер запущен`);
+});
+
+module.exports = { app, server, io };
 

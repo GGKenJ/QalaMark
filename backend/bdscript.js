@@ -51,6 +51,10 @@ async function initDatabase() {
 
     // Удаляем таблицы если существуют (в обратном порядке зависимостей)
     console.log('📦 Удаление существующих таблиц...');
+    await client.query('DROP TABLE IF EXISTS solution_likes CASCADE;');
+    await client.query('DROP TABLE IF EXISTS notifications CASCADE;');
+    await client.query('DROP TABLE IF EXISTS solutions CASCADE;');
+    await client.query('DROP TABLE IF EXISTS completed_works CASCADE;');
     await client.query('DROP TABLE IF EXISTS comments CASCADE;');
     await client.query('DROP TABLE IF EXISTS likes CASCADE;');
     await client.query('DROP TABLE IF EXISTS feedbacks CASCADE;');
@@ -150,6 +154,48 @@ async function initDatabase() {
     `);
     console.log('✅ Таблица completed_works создана');
 
+    // 7. Создаём таблицу solutions (решения сотрудников)
+    console.log('🔧 Создание таблицы solutions...');
+    await client.query(`
+      CREATE TABLE solutions (
+        id SERIAL PRIMARY KEY,
+        feedback_id INT REFERENCES feedbacks(id) ON DELETE CASCADE,
+        staff_id INT REFERENCES users(id) ON DELETE CASCADE,
+        description TEXT,
+        photo_url TEXT,
+        likes INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✅ Таблица solutions создана');
+
+    // 8. Создаём таблицу notifications (уведомления)
+    console.log('🔔 Создание таблицы notifications...');
+    await client.query(`
+      CREATE TABLE notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        message TEXT NOT NULL,
+        link TEXT,
+        is_read BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✅ Таблица notifications создана');
+
+    // 9. Создаём таблицу solution_likes (лайки решений)
+    console.log('👍 Создание таблицы solution_likes...');
+    await client.query(`
+      CREATE TABLE solution_likes (
+        id SERIAL PRIMARY KEY,
+        solution_id INT REFERENCES solutions(id) ON DELETE CASCADE,
+        user_id INT REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (solution_id, user_id)
+      );
+    `);
+    console.log('✅ Таблица solution_likes создана');
+
     // Добавляем начальные категории
     console.log('\n🎨 Добавление начальных категорий...');
     await client.query(`
@@ -163,6 +209,89 @@ async function initDatabase() {
     `);
     console.log('✅ Категории добавлены');
 
+    // Добавляем тестовых пользователей
+    console.log('\n👥 Добавление тестовых пользователей...');
+    const bcrypt = require('bcrypt');
+    const testPassword = await bcrypt.hash('password123', 10);
+    
+    // Обычный пользователь
+    await client.query(`
+      INSERT INTO users (username, password_hash, role, full_name, email, phone)
+      VALUES ('user@test.com', $1, 'user', 'Тестовый Пользователь', 'user@test.com', '+77001234567')
+      ON CONFLICT (username) DO NOTHING
+    `, [testPassword]);
+    
+    // Сотрудник (дорожный рабочий)
+    await client.query(`
+      INSERT INTO users (username, password_hash, role, position, full_name, email, phone)
+      VALUES ('employee@test.com', $1, 'employee', 'road_worker', 'Иванов Иван Иванович', 'employee@test.com', '+77001234568')
+      ON CONFLICT (username) DO NOTHING
+    `, [testPassword]);
+    
+    // Администратор
+    await client.query(`
+      INSERT INTO users (username, password_hash, role, full_name, email, phone)
+      VALUES ('admin@test.com', $1, 'admin', 'Администратор Системы', 'admin@test.com', '+77001234569')
+      ON CONFLICT (username) DO NOTHING
+    `, [testPassword]);
+    
+    console.log('✅ Тестовые пользователи добавлены');
+    console.log('   - user@test.com / password123 (обычный пользователь)');
+    console.log('   - employee@test.com / password123 (сотрудник)');
+    console.log('   - admin@test.com / password123 (администратор)');
+
+    // Добавляем тестовые уведомления
+    console.log('\n🔔 Добавление тестовых уведомлений...');
+    try {
+      // Получаем ID пользователей
+      const userResult = await client.query("SELECT id FROM users WHERE username = 'user@test.com'");
+      const employeeResult = await client.query("SELECT id FROM users WHERE username = 'employee@test.com'");
+      
+      if (userResult.rows.length > 0) {
+        const userId = userResult.rows[0].id;
+        // Проверяем, есть ли уже уведомления для этого пользователя
+        const existingNotifications = await client.query(
+          "SELECT COUNT(*) as count FROM notifications WHERE user_id = $1",
+          [userId]
+        );
+        
+        if (parseInt(existingNotifications.rows[0].count) === 0) {
+          await client.query(`
+            INSERT INTO notifications (user_id, message, link, is_read)
+            VALUES 
+              ($1, 'Добро пожаловать в QalaMark! Это тестовое уведомление.', '/map', false),
+              ($1, 'Ваша жалоба была рассмотрена.', '/map', false)
+          `, [userId]);
+          console.log('✅ Тестовые уведомления для пользователя добавлены');
+        } else {
+          console.log('✅ У пользователя уже есть уведомления');
+        }
+      }
+      
+      if (employeeResult.rows.length > 0) {
+        const employeeId = employeeResult.rows[0].id;
+        // Проверяем, есть ли уже уведомления для этого сотрудника
+        const existingNotifications = await client.query(
+          "SELECT COUNT(*) as count FROM notifications WHERE user_id = $1",
+          [employeeId]
+        );
+        
+        if (parseInt(existingNotifications.rows[0].count) === 0) {
+          await client.query(`
+            INSERT INTO notifications (user_id, message, link, is_read)
+            VALUES 
+              ($1, 'Новая жалоба в категории "дорога" требует вашего внимания.', '/map', false),
+              ($1, 'У вас есть новые задачи для выполнения.', '/map', false)
+          `, [employeeId]);
+          console.log('✅ Тестовые уведомления для сотрудника добавлены');
+        } else {
+          console.log('✅ У сотрудника уже есть уведомления');
+        }
+      }
+    } catch (err) {
+      console.log('⚠️  Не удалось добавить тестовые уведомления:', err.message);
+    }
+
     // Создаём индексы для оптимизации запросов
     console.log('\n⚡ Создание индексов...');
     await client.query('CREATE INDEX idx_feedbacks_status ON feedbacks(status);');
@@ -174,6 +303,12 @@ async function initDatabase() {
     await client.query('CREATE INDEX idx_comments_feedback_id ON comments(feedback_id);');
     await client.query('CREATE INDEX idx_comments_user_id ON comments(user_id);');
     await client.query('CREATE INDEX idx_completed_works_user_id ON completed_works(user_id);');
+    await client.query('CREATE INDEX idx_solutions_feedback_id ON solutions(feedback_id);');
+    await client.query('CREATE INDEX idx_solutions_staff_id ON solutions(staff_id);');
+    await client.query('CREATE INDEX idx_notifications_user_id ON notifications(user_id);');
+    await client.query('CREATE INDEX idx_notifications_is_read ON notifications(is_read);');
+    await client.query('CREATE INDEX idx_solution_likes_solution_id ON solution_likes(solution_id);');
+    await client.query('CREATE INDEX idx_solution_likes_user_id ON solution_likes(user_id);');
     console.log('✅ Индексы созданы');
 
     // Проверяем и добавляем новые колонки, если их нет
@@ -222,6 +357,9 @@ async function initDatabase() {
     console.log('   - likes (лайки и дизлайки пользователей)');
     console.log('   - comments (комментарии)');
     console.log('   - completed_works (завершенные работы сотрудников)');
+    console.log('   - solutions (решения сотрудников)');
+    console.log('   - notifications (уведомления)');
+    console.log('   - solution_likes (лайки решений)');
     
   } catch (error) {
     console.error('❌ Ошибка при инициализации базы данных:', error);

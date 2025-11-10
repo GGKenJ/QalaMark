@@ -105,6 +105,20 @@ const LoginOverlay = ({ onLoginSuccess }) => {
               </div>
             )}
 
+            {!isLoginMode && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="full_name">ФИО</label>
+                  <input
+                    {...registerForm('full_name')}
+                    type="text"
+                    id="full_name"
+                    placeholder="Введите ваше полное имя"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="form-group">
               <label htmlFor="phone">Номер телефона</label>
               <input
@@ -125,6 +139,46 @@ const LoginOverlay = ({ onLoginSuccess }) => {
                 <span className="field-error">{errors.phone.message}</span>
               )}
             </div>
+
+            {!isLoginMode && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="role">Роль</label>
+                  <select
+                    {...registerForm('role', { required: 'Выберите роль' })}
+                    id="role"
+                    className={errors.role ? 'input-error' : ''}
+                  >
+                    <option value="user">Обычный пользователь</option>
+                    <option value="employee">Сотрудник</option>
+                  </select>
+                  {errors.role && (
+                    <span className="field-error">{errors.role.message}</span>
+                  )}
+                </div>
+
+                {role === 'employee' && (
+                  <div className="form-group">
+                    <label htmlFor="position">Должность *</label>
+                    <select
+                      {...registerForm('position', { 
+                        required: role === 'employee' ? 'Выберите должность' : false 
+                      })}
+                      id="position"
+                      className={errors.position ? 'input-error' : ''}
+                    >
+                      <option value="">Выберите должность</option>
+                      {POSITIONS.map(pos => (
+                        <option key={pos.id} value={pos.id}>{pos.name}</option>
+                      ))}
+                    </select>
+                    {errors.position && (
+                      <span className="field-error">{errors.position.message}</span>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
 
             <div className="form-group">
               <label htmlFor="password">Пароль</label>
@@ -196,52 +250,6 @@ const LoginOverlay = ({ onLoginSuccess }) => {
                   {errors.confirmPassword && (
                     <span className="field-error">{errors.confirmPassword.message}</span>
                   )}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="role">Роль</label>
-                  <select
-                    {...registerForm('role', { required: 'Выберите роль' })}
-                    id="role"
-                    className={errors.role ? 'input-error' : ''}
-                  >
-                    <option value="user">Обычный пользователь</option>
-                    <option value="employee">Сотрудник</option>
-                  </select>
-                  {errors.role && (
-                    <span className="field-error">{errors.role.message}</span>
-                  )}
-                </div>
-
-                {role === 'employee' && (
-                  <div className="form-group">
-                    <label htmlFor="position">Должность *</label>
-                    <select
-                      {...registerForm('position', { 
-                        required: role === 'employee' ? 'Выберите должность' : false 
-                      })}
-                      id="position"
-                      className={errors.position ? 'input-error' : ''}
-                    >
-                      <option value="">Выберите должность</option>
-                      {POSITIONS.map(pos => (
-                        <option key={pos.id} value={pos.id}>{pos.name}</option>
-                      ))}
-                    </select>
-                    {errors.position && (
-                      <span className="field-error">{errors.position.message}</span>
-                    )}
-                  </div>
-                )}
-
-                <div className="form-group">
-                  <label htmlFor="full_name">ФИО</label>
-                  <input
-                    {...registerForm('full_name')}
-                    type="text"
-                    id="full_name"
-                    placeholder="Введите ваше полное имя"
-                  />
                 </div>
 
                 <div className="form-group">

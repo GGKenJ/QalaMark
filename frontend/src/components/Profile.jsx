@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import './Profile.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-const Profile = ({ onClose }) => {
+const Profile = ({ onClose, onViewFeedback }) => {
+  const { logout } = useAuth();
   const [userData, setUserData] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
-  const [userComments, setUserComments] = useState([]);
   const [completedWorks, setCompletedWorks] = useState([]);
   const [employeeTasks, setEmployeeTasks] = useState([]);
   const [selectedTaskIds, setSelectedTaskIds] = useState([]); // Выбранные задачи для завершения
@@ -57,16 +58,6 @@ const Profile = ({ onClose }) => {
         setUserPosts(posts);
       }
 
-      // Загружаем комментарии пользователя
-      const commentsResponse = await fetch(`${API_URL}/api/user/comments`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (commentsResponse.ok) {
-        const comments = await commentsResponse.json();
-        setUserComments(comments);
-      }
 
       // Если сотрудник, загружаем задачи и завершенные работы
       if (userInfo && userInfo.role === 'employee') {
@@ -90,6 +81,7 @@ const Profile = ({ onClose }) => {
           setCompletedWorks(works);
         }
       }
+
     } catch (error) {
       console.error('Ошибка загрузки данных профиля:', error);
     } finally {
@@ -139,6 +131,7 @@ const Profile = ({ onClose }) => {
     }
   };
 
+
   const getPositionName = (positionId) => {
     const positions = {
       'police': 'Полицейский',
@@ -167,6 +160,13 @@ const Profile = ({ onClose }) => {
     return names[category] || 'Другое';
   };
 
+  const handleLogout = () => {
+    logout();
+    onClose();
+    // Перезагружаем страницу для сброса состояния
+    window.location.reload();
+  };
+
   if (loading) {
     return (
       <div className="profile-overlay" onClick={onClose}>
@@ -182,11 +182,16 @@ const Profile = ({ onClose }) => {
       <div className="profile-container" onClick={(e) => e.stopPropagation()}>
         <div className="profile-header">
           <h2>Профиль</h2>
-          <button className="profile-close" onClick={onClose}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <div className="profile-header-actions">
+            <button className="profile-logout-button" onClick={handleLogout}>
+              Выйти
+            </button>
+            <button className="profile-close" onClick={onClose}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="profile-tabs">
@@ -201,12 +206,6 @@ const Profile = ({ onClose }) => {
             onClick={() => setActiveTab('posts')}
           >
             Мои посты ({userPosts.length})
-          </button>
-          <button 
-            className={`profile-tab ${activeTab === 'comments' ? 'active' : ''}`}
-            onClick={() => setActiveTab('comments')}
-          >
-            Комментарии ({userComments.length})
           </button>
           {userData?.role === 'employee' && (
             <>
@@ -275,13 +274,26 @@ const Profile = ({ onClose }) => {
                 <p className="empty-message">У вас пока нет постов</p>
               ) : (
                 userPosts.map(post => (
-                  <div key={post.id} className="profile-post-item">
+                  <div 
+                    key={post.id} 
+                    className="profile-post-item"
+                    onClick={() => {
+                      // Открываем модальное окно просмотра жалобы
+                      if (onViewFeedback) {
+                        onViewFeedback(post);
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div className="post-header">
                       <h4>{post.title || 'Без названия'}</h4>
                       <span className="post-category">{getCategoryName(post.category)}</span>
                     </div>
                     {post.description && (
                       <p className="post-description">{post.description}</p>
+                    )}
+                    {post.is_anonymous && (
+                      <span className="post-anonymous-badge">Анонимный пост</span>
                     )}
                     <div className="post-footer">
                       <span className="post-votes">👍 {post.votes || 0} 👎 {post.dislikes || 0}</span>
@@ -295,25 +307,6 @@ const Profile = ({ onClose }) => {
             </div>
           )}
 
-          {activeTab === 'comments' && (
-            <div className="profile-comments">
-              {userComments.length === 0 ? (
-                <p className="empty-message">У вас пока нет комментариев</p>
-              ) : (
-                userComments.map(comment => (
-                  <div key={comment.id} className="profile-comment-item">
-                    <p className="comment-text">{comment.text}</p>
-                    <div className="comment-footer">
-                      <span className="comment-post">Пост: {comment.feedback_title || 'Удален'}</span>
-                      <span className="comment-date">
-                        {new Date(comment.created_at).toLocaleDateString('ru-RU')}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
 
           {activeTab === 'tasks' && userData?.role === 'employee' && (
             <div className="profile-tasks">

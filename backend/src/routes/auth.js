@@ -27,8 +27,15 @@ router.post('/register', async (req, res) => {
   try {
     const { username, password, role, position, full_name, email, phone } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Имя пользователя и пароль обязательны' });
+    console.log('Получены данные регистрации:', { username, password: password ? '***' : null, role, position, full_name, email, phone });
+
+    // Валидация данных
+    if (!username || !username.trim()) {
+      return res.status(400).json({ error: 'Номер телефона обязателен' });
+    }
+
+    if (!password || password.trim() === '') {
+      return res.status(400).json({ error: 'Пароль обязателен' });
     }
 
     if (password.length < 6) {
@@ -36,12 +43,12 @@ router.post('/register', async (req, res) => {
     }
 
     // Если сотрудник, проверяем наличие должности
-    if (role === 'employee' && !position) {
+    if (role === 'employee' && (!position || position.trim() === '')) {
       return res.status(400).json({ error: 'Для сотрудника необходимо указать должность' });
     }
 
     // Проверяем, существует ли пользователь
-    const existingUser = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const existingUser = await pool.query('SELECT * FROM users WHERE username = $1', [username.trim()]);
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ error: 'Пользователь с таким номером телефона уже существует' });
     }
@@ -54,7 +61,15 @@ router.post('/register', async (req, res) => {
       `INSERT INTO users (username, password_hash, role, position, full_name, email, phone) 
        VALUES ($1, $2, $3, $4, $5, $6, $7) 
        RETURNING id, username, role, position, full_name, email, phone`,
-      [username, passwordHash, role || 'user', position || null, full_name || null, email || null, phone || username]
+      [
+        username.trim(), 
+        passwordHash, 
+        role || 'user', 
+        position && position.trim() !== '' ? position : null, 
+        full_name && full_name.trim() !== '' ? full_name.trim() : null, 
+        email && email.trim() !== '' ? email.trim() : null, 
+        phone && phone.trim() !== '' ? phone.trim() : username.trim()
+      ]
     );
 
     const user = result.rows[0];
@@ -80,7 +95,11 @@ router.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Ошибка регистрации:', error);
-    res.status(500).json({ error: 'Ошибка сервера при регистрации' });
+    // Более детальная обработка ошибок
+    if (error.code === '23505') { // Ошибка уникальности PostgreSQL
+      return res.status(400).json({ error: 'Пользователь с таким номером телефона уже существует' });
+    }
+    res.status(500).json({ error: 'Ошибка сервера при регистрации: ' + error.message });
   }
 });
 

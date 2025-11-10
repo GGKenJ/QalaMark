@@ -92,6 +92,7 @@
   gap: 12px;
   align-items: center;
   pointer-events: auto;
+  margin-right: 60px; /* Отступ для колокольчика уведомлений */
 }
 
 /* Категории в header */
@@ -108,11 +109,12 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Кнопка профиля - всегда в левом верхнем углу */
+/* Кнопка профиля - в левом верхнем углу на уровне вкладок */
 .profile-button {
   position: absolute;
   left: 20px;
-  top: 16px;
+  top: 16px; /* На уровне вкладок, а не по центру */
+  transform: none; /* Убрали центрирование */
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -127,13 +129,35 @@
   color: #212121;
   transition: all 0.2s ease;
   pointer-events: auto;
-  z-index: 1001;
+  z-index: 1004; /* Увеличен z-index, чтобы быть выше других элементов */
 }
 
 .profile-button:hover {
   background: rgba(255, 255, 255, 1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transform: scale(1.05);
+}
+
+/* Колокольчик уведомлений в хедере - справа от кнопки профиля в левом верхнем углу */
+.header-notifications {
+  position: absolute;
+  top: 16px;
+  left: 80px; /* Справа от кнопки профиля (20px + 48px + 12px) */
+  z-index: 1005; /* Выше кнопки профиля, чтобы быть видимым */
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+/* На мобильных сдвигаем колокольчик левее, чтобы не перекрывался с бургер-меню */
+@media (max-width: 768px) {
+  .header-notifications {
+    left: 72px; /* Справа от кнопки профиля на мобильных */
+    right: auto;
+    top: 12px;
+  }
 }
 
 /* Контейнер вкладок */
@@ -543,12 +567,16 @@
 
 .list-container {
   width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
   background: white;
-  overflow-y: auto;
   position: relative;
+  align-items: stretch;
+  overflow: hidden;
+  box-sizing: border-box;
+  max-height: calc(100vh - 200px); /* Высота с учетом header */
+  pointer-events: auto;
+  z-index: 1002; /* Ниже кнопки профиля */
 }
 
 .list-header {
@@ -577,6 +605,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .add-feedback-button:hover {
@@ -591,7 +621,11 @@
   flex-direction: column;
   gap: 16px;
   background: white;
-  margin-top: 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 .feedback-item {
@@ -652,6 +686,18 @@
   border-top: 1px solid #E0E0E0;
 }
 
+.feedback-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.feedback-author {
+  font-size: 12px;
+  color: #616161;
+  font-style: italic;
+}
+
 .feedback-votes {
   font-size: 14px;
   font-weight: 600;
@@ -682,18 +728,21 @@
     width: 44px;
     height: 44px;
     left: 16px;
-    top: 12px;
+    top: 12px; /* На уровне вкладок на мобильных */
+    transform: none; /* Убрали центрирование */
   }
 
-  /* Бургер-меню на мобильных - вместо профиля во вкладке "Карта" */
+  /* Бургер-меню на мобильных - в правом верхнем углу во вкладке "Карта" */
   .mobile-burger-wrapper {
-    left: 16px;
+    right: 16px;
     top: 12px;
+    left: auto;
+    display: block !important; /* Показать бургер на мобильных */
   }
 
-  /* Скрыть профиль во вкладке "Карта" на мобильных */
-  .profile-button.hidden-on-mobile {
-    display: none;
+  /* Кнопка профиля всегда видна на мобильных */
+  .profile-button {
+    display: flex !important;
   }
 
   .tabs-container {
@@ -1025,6 +1074,13 @@
   margin-bottom: 16px;
 }
 
+.feedback-view-author {
+  font-size: 14px;
+  color: #616161;
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
 .feedback-view-description {
   margin: 16px 0;
   color: #212121;
@@ -1184,16 +1240,20 @@
   border-bottom: 1px solid #E0E0E0;
   display: flex;
   gap: 12px;
-  align-items: center;
-  position: sticky;
-  top: 73px; /* Ниже уровня кнопок вкладок и профиля */
-  z-index: 10;
+  align-items: flex-start;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   margin-top: 0;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  pointer-events: auto;
+  z-index: 1002; /* Ниже кнопки профиля */
 }
 
 .search-box {
   flex: 1;
+  min-width: 0;
 }
 
 .search-input {
@@ -1213,8 +1273,49 @@
   box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
 }
 
+.list-sort-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+.sort-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #212121;
+  white-space: nowrap;
+}
+
+.sort-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #212121;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  min-width: 0;
+}
+
+.sort-select:hover {
+  border-color: #2E7D32;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: #2E7D32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
 .list-category-filter {
   min-width: 180px;
+  max-width: 300px;
+  flex-shrink: 0;
 }
 
 .list-category-checkboxes {
@@ -1372,6 +1473,83 @@
   line-height: 1.6;
 }
 
+/* Секция комментариев в модальном окне просмотра */
+.feedback-comment-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #E0E0E0;
+}
+
+.feedback-comment-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #212121;
+}
+
+.feedback-comment-display {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #F5F5F5;
+  border-radius: 8px;
+  border-left: 3px solid #2E7D32;
+}
+
+.feedback-comment-display p {
+  margin: 0;
+  color: #424242;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comment-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.comment-textarea:focus {
+  outline: none;
+  border-color: #2E7D32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+.comment-submit-button {
+  align-self: flex-start;
+  padding: 10px 20px;
+  background: #2E7D32;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.comment-submit-button:hover {
+  background: #1B5E20;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+}
+
+.comment-submit-button:active {
+  transform: translateY(0);
+}
+
 /* Убираем preview фото (только изображения, видео оставляем) */
 .file-preview img {
   display: none;
@@ -1379,6 +1557,66 @@
 
 .file-preview span {
   display: none;
+}
+
+/* Секция решения проблемы для сотрудников */
+.feedback-solve-section {
+  margin-top: 20px;
+  padding: 16px;
+  background: #F5F5F5;
+  border-radius: 8px;
+}
+
+.solve-button,
+.complete-button {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  background: #2E7D32;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.solve-button:hover,
+.complete-button:hover {
+  background: #1B5E20;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
+}
+
+.solve-button:active,
+.complete-button:active {
+  transform: translateY(0);
+}
+
+.distance-warning,
+.category-warning {
+  padding: 12px 16px;
+  margin: 8px 0;
+  background: #FFF3E0;
+  border-left: 4px solid #FF9800;
+  border-radius: 4px;
+  color: #E65100;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.category-warning {
+  background: #FFEBEE;
+  border-left-color: #F44336;
+  color: #C62828;
+}
+
+.category-warning span {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #B71C1C;
 }
 
 /* Адаптивность для новых элементов */
@@ -1399,17 +1637,57 @@
   .list-filters {
     flex-direction: column;
     align-items: stretch;
-    top: 73px; /* Ниже уровня кнопок вкладок и профиля на мобильных */
     padding: 12px 16px;
+    gap: 12px;
+  }
+  
+  .search-box {
+    width: 100%;
+    min-width: 0;
+  }
+  
+  .list-sort-filter {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .sort-label {
+    font-size: 13px;
+  }
+
+  .sort-select {
+    width: 100%;
+  }
+
+  .list-category-filter {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  
+  .add-feedback-button {
+    width: 100%;
   }
 
   .list-container {
     padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
   }
 
   .feedbacks-list {
     padding-top: 0;
     margin-top: 0;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  
+  .list-filters {
+    flex-shrink: 0;
   }
 
   .search-input,
@@ -1454,6 +1732,42 @@
   .mobile-burger-wrapper {
     display: block;
   }
+
+  /* Стили для категорий в бургер-меню на мобильных - как в десктопной версии */
+  .burger-category-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Отступ между чекбоксом и текстом */
+    cursor: pointer;
+    padding: 6px 0; /* Убрал горизонтальный padding, оставил только вертикальный */
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 13px;
+    font-weight: 500;
+    color: #212121;
+    white-space: nowrap;
+  }
+
+  .burger-category-checkbox:hover {
+    background: rgba(46, 125, 50, 0.1);
+  }
+
+  .burger-category-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+    cursor: pointer;
+    accent-color: #2E7D32;
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .burger-category-checkbox span {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+  }
 }
 
 /* Скрыть бургер-меню на десктопе */
@@ -1461,16 +1775,17 @@
   .mobile-burger-wrapper {
     display: none;
   }
+
 }
 
-/* Стили для бургер-меню */
+/* Стили для бургер-меню - в правом верхнем углу */
 .mobile-burger-wrapper {
   position: absolute;
-  left: 20px;
+  right: 20px;
   top: 16px;
   z-index: 1003;
   pointer-events: auto;
-  display: none; /* По умолчанию скрыто, показывается только на мобильных */
+  /* display управляется через медиа-запросы */
 }
 
 .burger-menu-button {
@@ -1575,15 +1890,19 @@
 
 .burger-filter-group {
   margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .burger-filter-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   font-size: 14px;
   font-weight: 600;
   color: #333333;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  line-height: 1.4;
 }
 
 .burger-city-select,
@@ -1600,6 +1919,14 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   outline: none;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%232E7D32' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
 }
 
 .burger-city-select:hover,
@@ -1617,32 +1944,6 @@
 .burger-category-checkboxes {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.burger-category-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: background 0.2s ease;
-}
-
-.burger-category-checkbox:hover {
-  background: #F5F5F5;
-}
-
-.burger-category-checkbox input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: #4CAF50;
-}
-
-.burger-category-checkbox span {
-  font-size: 14px;
-  color: #333333;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  gap: 6px; /* Как в десктопной версии (.category-checkboxes-vertical) */
+  margin-top: 8px;
 }

@@ -25,23 +25,40 @@ export const useAuth = () => {
   const register = useCallback(async (data) => {
     setLoading(true);
     try {
+      // Валидация данных перед отправкой
+      if (!data.phone || !data.phone.trim()) {
+        return { success: false, error: 'Номер телефона обязателен' };
+      }
+      if (!data.password || data.password.length < 6) {
+        return { success: false, error: 'Пароль должен содержать минимум 6 символов' };
+      }
+      if (data.role === 'employee' && !data.position) {
+        return { success: false, error: 'Для сотрудника необходимо указать должность' };
+      }
+
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: data.phone, // Используем телефон как username
+          username: data.phone.trim(), // Используем телефон как username
           password: data.password,
           role: data.role || 'user',
           position: data.position || null,
           full_name: data.full_name || null,
           email: data.email || null,
-          phone: data.phone,
+          phone: data.phone.trim(),
         }),
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('Ошибка парсинга ответа:', parseError);
+        return { success: false, error: 'Ошибка сервера. Попробуйте еще раз.' };
+      }
 
       if (response.ok) {
         if (result.token) {

@@ -65,6 +65,30 @@
   color: #212121;
 }
 
+.profile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-logout-button {
+  padding: 8px 16px;
+  border: 1px solid #F44336;
+  border-radius: 8px;
+  background: transparent;
+  color: #F44336;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+.profile-logout-button:hover {
+  background: #F44336;
+  color: white;
+}
+
 .profile-close {
   width: 36px;
   height: 36px;
@@ -315,5 +339,17 @@
   color: #616161;
   font-size: 16px;
   padding: 40px 20px;
+}
+
+.post-anonymous-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #E0E0E0;
+  color: #616161;
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 8px;
+  font-style: italic;
 }
 
